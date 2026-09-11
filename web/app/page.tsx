@@ -7,7 +7,7 @@ const priorities = [
 export default function Home() {
   return (
     <main>
-      <p className="eyebrow">PERSONAL CAREER OS</p>
+      <p className="eyebrow">PERSONAL OS</p>
       <h1>Make your next move deliberate.</h1>
       <p className="intro">
         Your private workspace for goals, tasks, applications, and progress.

@@ -1,5 +1,5 @@
 {
-  "name": "career-os-web",
+  "name": "personal-os-web",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Personal Career OS",
-  description: "A private career operating system.",
+  title: "Personal OS",
+  description: "A private personal operating system.",
 };
 
 export default function RootLayout({

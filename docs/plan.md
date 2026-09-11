@@ -1,10 +1,10 @@
-# Personal Career OS Plan
+# Personal OS Plan
 
-This file is the detailed companion to [`career-os-map.mmd`](./career-os-map.mmd). The Mermaid map is the compact execution source of truth: follow it top-to-bottom, mark one block `ACTIVE`, validate it, then mark it `DONE` and commit.
+This file is the detailed companion to [`personal-os-map.mmd`](./personal-os-map.mmd). The Mermaid map is the compact execution source of truth: follow it top-to-bottom, mark one block `ACTIVE`, validate it, then mark it `DONE` and commit.
 
 ## Scope
 
-Build a private, self-hostable single-user system for dashboard priorities, goals, tasks, job applications, projects, and activity tracking. Use Docker Compose with Next.js/TypeScript, FastAPI, PostgreSQL, and n8n. Defer multi-user accounts, teams, SSO, realtime infrastructure, and autonomous AI writes.
+Build a private, self-hostable single-user personal operating system. Start with the career module: dashboard priorities, goals, tasks, job applications, projects, and activity tracking. Use Docker Compose with Next.js/TypeScript, FastAPI, PostgreSQL, and n8n. Defer multi-user accounts, teams, SSO, realtime infrastructure, and autonomous AI writes.
 
 ## Blocks
 
