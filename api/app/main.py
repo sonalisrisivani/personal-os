@@ -1,9 +1,26 @@
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI(title="Personal OS API", version="0.1.0")
+from .database import Base, engine
+from .routers.goals import router as goals_router
+from .routers.tasks import router as tasks_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(title="Personal OS API", version="0.1.0", lifespan=lifespan)
+app.include_router(goals_router)
+app.include_router(tasks_router)
 
 
 class HealthResponse(BaseModel):

@@ -12,8 +12,8 @@ Each completed map block is delivered as a focused commit. The first usable appl
 
 - R0 repository bootstrap: done
 - F1 foundation and local deployment: done
-- F2 goals and tasks: active
-- F3 dashboard and activity tracking: pending
+- F2 goals and tasks: done
+- F3 dashboard and activity tracking: active
 - F4 job applications and recruitment email automation: pending
 - F5 projects and AI agent: pending
 - V validation gate: pending

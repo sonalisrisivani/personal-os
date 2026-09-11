@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+import uuid
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_create_and_get_goal(client: AsyncClient):
+    payload = {
+        "title": "Learn Rust",
+        "description": "Master systems programming",
+        "status": "active",
+        "priority": 1,
+        "due_date": "2026-12-31",
+    }
+    response = await client.post("/goals", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["title"] == "Learn Rust"
+    assert data["status"] == "active"
+    assert data["priority"] == 1
+    assert data["due_date"] == "2026-12-31"
+    goal_id = data["id"]
+
+    # Get goal
+    get_res = await client.get(f"/goals/{goal_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["id"] == goal_id
+
+
+@pytest.mark.asyncio
+async def test_list_and_filter_goals(client: AsyncClient):
+    await client.post("/goals", json={"title": "Goal 1", "status": "active"})
+    await client.post("/goals", json={"title": "Goal 2", "status": "completed"})
+
+    # List all
+    res = await client.get("/goals")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total"] == 2
+    assert len(data["items"]) == 2
+
+    # Filter status
+    res_filtered = await client.get("/goals?status=active")
+    assert res_filtered.status_code == 200
+    data_filtered = res_filtered.json()
+    assert data_filtered["total"] == 1
+    assert data_filtered["items"][0]["title"] == "Goal 1"
+
+
+@pytest.mark.asyncio
+async def test_update_and_delete_goal(client: AsyncClient):
+    res = await client.post("/goals", json={"title": "Old Title"})
+    goal_id = res.json()["id"]
+
+    # Patch
+    patch_res = await client.patch(f"/goals/{goal_id}", json={"title": "New Title", "status": "completed"})
+    assert patch_res.status_code == 200
+    assert patch_res.json()["title"] == "New Title"
+    assert patch_res.json()["status"] == "completed"
+
+    # Delete
+    del_res = await client.delete(f"/goals/{goal_id}")
+    assert del_res.status_code == 204
+
+    # Get after delete
+    get_res = await client.get(f"/goals/{goal_id}")
+    assert get_res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_nonexistent_goal(client: AsyncClient):
+    random_id = str(uuid.uuid4())
+    res = await client.get(f"/goals/{random_id}")
+    assert res.status_code == 404
