@@ -94,29 +94,29 @@ export default function ProjectForm({ project, goals, onSave, onClose }: Project
           </div>
 
           <div className="form-group">
-            <label htmlFor="project-tech-stack">Tech Stack</label>
+            <label htmlFor="project-tech-stack">Context / Tags</label>
             <input
               id="project-tech-stack"
               type="text"
               value={techStack}
               onChange={(e) => setTechStack(e.target.value)}
-              placeholder="e.g. Next.js, FastAPI, PostgreSQL, Docker"
+              placeholder="e.g. Health, Career, Next.js, FastAPI"
             />
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="project-repo">Repo URL</label>
+              <label htmlFor="project-repo">Resources / Doc URL</label>
               <input
                 id="project-repo"
                 type="url"
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder="https://github.com/..."
+                placeholder="https://..."
               />
             </div>
             <div className="form-group">
-              <label htmlFor="project-demo">Demo URL</label>
+              <label htmlFor="project-demo">Reference URL</label>
               <input
                 id="project-demo"
                 type="url"

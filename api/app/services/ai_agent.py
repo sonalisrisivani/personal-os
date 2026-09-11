@@ -21,67 +21,73 @@ SUGGESTION_SCHEMA = {
 
 def _heuristic_suggestion(project_title: str, tech_stack: str, status: str) -> dict[str, Any]:
     """Rule-based fallback that works without any API keys."""
-    techs = [t.strip().lower() for t in tech_stack.split(",") if t.strip()] if tech_stack else []
+    context = [t.strip().lower() for t in tech_stack.split(",")] if tech_stack else []
 
     # Milestone by status
     milestone_map = {
-        "active": "Ship a working prototype that demonstrates core functionality",
-        "in_progress": "Complete the primary feature set and write basic tests",
-        "on_hold": "Resolve the blocker keeping this project on hold",
-        "completed": "Prepare a retrospective and document lessons learned",
-        "archived": "Extract reusable patterns and document them",
+        "active": "Achieve the core objective and establish a sustainable habit or set of actions.",
+        "in_progress": "Overcome current obstacles and maintain consistent momentum.",
+        "on_hold": "Resolve the blocker keeping this project on hold.",
+        "completed": "Reflect on success and identify next growth opportunities.",
+        "archived": "Extract reusable learnings and document them.",
     }
-    recommended_milestone = milestone_map.get(status, "Define clear success criteria and next deliverable")
+    recommended_milestone = milestone_map.get(status, "Define clear success criteria and next deliverable.")
 
-    # Base tasks applicable to most projects
+    # Base tasks applicable to most projects/goals
     base_tasks = [
         {
-            "title": "Write project README with setup instructions",
-            "description": "Cover prerequisites, installation, development workflow, and deployment.",
-            "priority": 2,
+            "title": "Define clear success metrics",
+            "description": "How will you know when this project is successfully completed?",
+            "priority": 1,
         },
         {
-            "title": "Add end-to-end tests for critical paths",
-            "description": "Ensure the most important user flows are covered by automated tests.",
+            "title": "Identify and mitigate potential obstacles",
+            "description": "What could stop you from moving forward? How can you plan around that?",
             "priority": 2,
         },
     ]
 
-    # Tech-specific tasks
-    tech_tasks: list[dict] = []
-    if any(t in techs for t in ["fastapi", "flask", "django"]):
-        tech_tasks.append({
-            "title": "Add API rate limiting and authentication middleware",
-            "description": "Protect endpoints with proper authentication and throttle heavy consumers.",
-            "priority": 1,
-        })
-    if any(t in techs for t in ["react", "next.js", "nextjs", "vue"]):
-        tech_tasks.append({
-            "title": "Audit accessibility with axe-core or Lighthouse",
-            "description": "Fix WCAG 2.1 AA issues to broaden user reach and comply with standards.",
+    # Content/Context-specific tasks
+    extra_tasks: list[dict] = []
+
+    # Life/Health contexts
+    if any(k in " ".join(context) for k in ["fat loss", "weight loss", "diet", "fitness", "health", "workout"]):
+        extra_tasks.extend([
+            {
+                "title": "Create a sustainable weekly meal plan",
+                "description": "Plan meals that you enjoy and fit your goals, making it easier to be consistent.",
+                "priority": 1,
+            },
+            {
+                "title": "Schedule workout sessions",
+                "description": "Block off specific times in your calendar for physical activity.",
+                "priority": 1,
+            }
+        ])
+
+    # Financial/Planning contexts
+    if any(k in " ".join(context) for k in ["finance", "money", "budget", "save"]):
+        extra_tasks.extend([
+            {
+                "title": "Analyze current spending habits",
+                "description": "Review the last 30 days to identify areas for adjustment.",
+                "priority": 1,
+            }
+        ])
+
+    # Tech contexts (if used as technical projects)
+    if any(t in context for t in ["fastapi", "react", "next.js", "docker"]):
+        extra_tasks.append({
+            "title": "Set up a structured development environment",
+            "description": "Ensure your tools and repository are configured for efficiency.",
             "priority": 2,
         })
-    if any(t in techs for t in ["postgresql", "postgres", "sqlite", "mysql"]):
-        tech_tasks.append({
-            "title": "Add database migration strategy and seed data",
-            "description": "Ensure schema migrations are version-controlled and reproducible.",
-            "priority": 1,
-        })
-    if any(t in techs for t in ["docker", "kubernetes", "k8s"]):
-        tech_tasks.append({
-            "title": "Set up CI/CD pipeline with automated tests on every PR",
-            "description": "Configure GitHub Actions or similar to run tests, lint, and build checks.",
-            "priority": 1,
-        })
 
-    suggested_tasks = (tech_tasks + base_tasks)[:5]  # cap at 5 suggestions
+    suggested_tasks = (extra_tasks + base_tasks)[:5]  # cap at 5 suggestions
 
-    stack_note = f" using {tech_stack}" if tech_stack else ""
     explanation = (
-        f"Analysis of '{project_title}'{stack_note} (status: {status}): "
-        f"These tasks address common gaps in {status} projects. "
-        + (f"Tech-specific tasks were selected based on your stack ({tech_stack}). " if tech_stack else "")
-        + "All suggestions are actionable and scoped to drive your next milestone."
+        f"Analysis of '{project_title}' (status: {status}): "
+        f"These tasks are designed to streamline action, build consistency, and reduce mental overhead. "
     )
 
     return {
@@ -98,24 +104,23 @@ async def _anthropic_suggestion(
     try:
         import anthropic  # type: ignore[import]
     except ImportError:
-        # anthropic SDK not installed — fall back gracefully
         return _heuristic_suggestion(project_title, tech_stack, status)
 
     client = anthropic.Anthropic(api_key=api_key)
 
     system = (
-        "You are a senior engineering coach. "
-        "Given a software project's details, return a JSON object with three keys:\n"
+        "You are a holistic life and productivity coach. "
+        "Given a project or life goal, return a JSON object with three keys:\n"
         "  explanation: string explaining your reasoning\n"
         "  suggested_tasks: array of {title, description, priority} objects (1=high, 2=medium, 3=low)\n"
         "  recommended_milestone: string describing the next high-impact milestone\n"
         "Output ONLY valid JSON, no markdown fences."
     )
     user_msg = (
-        f"Project: {project_title}\n"
-        f"Tech stack: {tech_stack or 'not specified'}\n"
+        f"Goal/Project: {project_title}\n"
+        f"Context/Tags: {tech_stack or 'not specified'}\n"
         f"Status: {status}\n"
-        f"Additional context: {prompt}"
+        f"Additional context/concerns: {prompt}"
     )
 
     message = client.messages.create(

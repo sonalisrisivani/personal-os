@@ -295,7 +295,7 @@ export default function Home() {
                         </div>
                         <div className="item__meta">
                           {p.tech_stack && p.tech_stack.split(',').map(t => <span key={t} className="pill">{t.trim()}</span>)}
-                          {p.repo_url && <a href={p.repo_url} target="_blank" className="muted" style={{textDecoration: 'none'}}>Repo</a>}
+                          {p.repo_url && <a href={p.repo_url} target="_blank" className="muted" style={{textDecoration: 'none'}}>Link</a>}
                         </div>
                         {p.description && <p className="item__desc">{p.description}</p>}
                       </div>
