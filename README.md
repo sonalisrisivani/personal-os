@@ -10,9 +10,9 @@ Each completed map block is delivered as a focused commit. The first usable appl
 
 ## Current status
 
-- R0 repository bootstrap: active
-- F1 foundation and local deployment: pending
-- F2 goals and tasks: pending
+- R0 repository bootstrap: done
+- F1 foundation and local deployment: done
+- F2 goals and tasks: active
 - F3 dashboard and activity tracking: pending
 - F4 job applications and recruitment email automation: pending
 - F5 projects and AI agent: pending

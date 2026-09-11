@@ -1,0 +1,16 @@
+:root {
+  color-scheme: light;
+  background: #f6f7f2;
+  color: #18221b;
+  font-family: Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 760px; margin: 0 auto; padding: 12vh 24px; }
+.eyebrow { color: #477255; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.16em; }
+h1 { max-width: 620px; font-size: clamp(2.5rem, 8vw, 5.5rem); line-height: 0.98; margin: 24px 0; }
+.intro { color: #59665c; font-size: 1.2rem; max-width: 520px; }
+section { margin-top: 64px; background: #fff; border: 1px solid #dfe6df; border-radius: 18px; padding: 24px; }
+li { padding: 12px 0; border-bottom: 1px solid #edf0ed; }
+li:last-child { border-bottom: 0; }

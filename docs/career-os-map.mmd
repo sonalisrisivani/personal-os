@@ -5,9 +5,9 @@
 %% After each completed block: change its STATUS and update the matching SQL todo.
 
 flowchart TD
-    START([START]) --> R["R0 Create private GitHub repository<br/>STATUS: ACTIVE"]
-    R --> F["F1 Foundation + local deployment<br/>STATUS: PENDING"]
-    F --> G["F2 Goals + tasks vertical slice<br/>STATUS: PENDING"]
+    START([START]) --> R["R0 Create private GitHub repository<br/>STATUS: DONE"]
+    R --> F["F1 Foundation + local deployment<br/>STATUS: DONE"]
+    F --> G["F2 Goals + tasks vertical slice<br/>STATUS: ACTIVE"]
     G --> A["F3 Dashboard + activity tracking<br/>STATUS: PENDING"]
     A --> E["F4 Job applications + recruitment email automation<br/>STATUS: PENDING"]
     E --> I["F5 Projects + AI agent<br/>STATUS: PENDING"]
@@ -26,5 +26,7 @@ flowchart TD
     classDef active fill:#cfe2ff,stroke:#0d6efd,color:#111;
     classDef done fill:#d1e7dd,stroke:#198754,color:#111;
     classDef blocked fill:#f8d7da,stroke:#dc3545,color:#111;
-    class F,G,A,E,I,V pending;
-    class R active;
+    class A,E,I,V pending;
+    class G active;
+    class F done;
+    class R done;
