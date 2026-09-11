@@ -14,3 +14,83 @@ h1 { max-width: 620px; font-size: clamp(2.5rem, 8vw, 5.5rem); line-height: 0.98;
 section { margin-top: 64px; background: #fff; border: 1px solid #dfe6df; border-radius: 18px; padding: 24px; }
 li { padding: 12px 0; border-bottom: 1px solid #edf0ed; }
 li:last-child { border-bottom: 0; }
+
+/* F3 Metrics & Activity */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 48px;
+}
+.metric-card {
+  background: #fff;
+  border: 1px solid #dfe6df;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.metric-card.skeleton {
+  min-height: 100px;
+  background: #edf0ed;
+}
+.metric-card.metric-warning {
+  border-color: #d8c3bc;
+  background: #fdf5f2;
+}
+.metric-label {
+  font-size: 0.85rem;
+  color: #59665c;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+.metric-subtext {
+  font-size: 0.85rem;
+  color: #79867c;
+}
+.metric-warning .metric-value,
+.metric-warning .metric-label,
+.metric-warning .metric-subtext {
+  color: #9c4125;
+}
+
+.activity-section {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-top: 64px;
+}
+.activity-list { /* ... */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0ed;
+}
+.activity-icon {
+  font-size: 1.2rem;
+}
+.activity-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.activity-title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.activity-time {
+  font-size: 0.8rem;
+  color: #79867c;
+}

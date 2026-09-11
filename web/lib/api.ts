@@ -25,6 +25,27 @@ export interface Task {
   updated_at: string;
 }
 
+export interface ActivityEvent {
+  id: string;
+  event_type: string;
+  entity_type: string;
+  entity_id: string | null;
+  title: string;
+  details: string | null;
+  created_at: string;
+}
+
+export interface SummaryMetrics {
+  total_goals: number;
+  active_goals: number;
+  completed_goals: number;
+  total_tasks: number;
+  pending_tasks: number;
+  in_progress_tasks: number;
+  done_tasks: number;
+  overdue_tasks: number;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -122,4 +143,23 @@ export async function updateTask(
 
 export async function deleteTask(id: string): Promise<void> {
   return request<void>(`/tasks/${id}`, { method: "DELETE" });
+}
+
+// ─── Activities & Metrics ───────────────────────────────────────────────────
+
+export async function fetchActivities(params?: {
+  entity_type?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<PaginatedResponse<ActivityEvent>> {
+  const query = new URLSearchParams();
+  if (params?.entity_type) query.set("entity_type", params.entity_type);
+  if (params?.page) query.set("page", params.page.toString());
+  if (params?.page_size) query.set("page_size", params.page_size.toString());
+  const qs = query.size ? `?${query}` : "";
+  return request<PaginatedResponse<ActivityEvent>>(`/activities${qs}`);
+}
+
+export async function fetchSummaryMetrics(): Promise<SummaryMetrics> {
+  return request<SummaryMetrics>("/metrics/summary");
 }

@@ -3,13 +3,14 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..models import Goal
 from ..schemas import GoalCreate, GoalResponse, GoalUpdate, PaginatedResponse
+from ..services.activity import record_activity
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
@@ -20,6 +21,13 @@ async def create_goal(body: GoalCreate, db: AsyncSession = Depends(get_db)) -> G
     db.add(goal)
     await db.commit()
     await db.refresh(goal)
+    await record_activity(
+        db=db,
+        event_type="goal.created",
+        entity_type="goal",
+        entity_id=goal.id,
+        title=f"Created goal: {goal.title}",
+    )
     return GoalResponse.model_validate(goal)
 
 
@@ -65,13 +73,29 @@ async def update_goal(
         setattr(goal, field, value)
     await db.commit()
     await db.refresh(goal)
+    await record_activity(
+        db=db,
+        event_type="goal.updated",
+        entity_type="goal",
+        entity_id=goal.id,
+        title=f"Updated goal: {goal.title}",
+    )
     return GoalResponse.model_validate(goal)
 
 
-@router.delete("/{goal_id}", status_code=204)
-async def delete_goal(goal_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> None:
+@router.delete("/{goal_id}", status_code=204, response_class=Response)
+async def delete_goal(goal_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Response:
     goal = await db.get(Goal, goal_id)
     if goal is None:
         raise HTTPException(status_code=404, detail="Goal not found")
+    title = goal.title
     await db.delete(goal)
     await db.commit()
+    await record_activity(
+        db=db,
+        event_type="goal.deleted",
+        entity_type="goal",
+        entity_id=goal_id,
+        title=f"Deleted goal: {title}",
+    )
+    return Response(status_code=204)

@@ -37,3 +37,12 @@ class Task(Base, BaseMixin):
     priority: Mapped[int] = mapped_column(default=0)
     due_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     goal: Mapped[Optional["Goal"]] = relationship(back_populates="tasks")
+
+
+class ActivityEvent(Base, BaseMixin):
+    __tablename__ = "activity_events"
+    event_type: Mapped[str] = mapped_column(String, nullable=False)
+    entity_type: Mapped[str] = mapped_column(String, nullable=False)
+    entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(nullable=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    details: Mapped[Optional[str]] = mapped_column(String, nullable=True)

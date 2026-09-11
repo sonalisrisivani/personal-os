@@ -4,15 +4,21 @@ import { useState, useEffect, useCallback } from "react";
 import {
   fetchGoals,
   fetchTasks,
+  fetchActivities,
+  fetchSummaryMetrics,
   deleteGoal,
   deleteTask,
   Goal,
   Task,
+  ActivityEvent,
+  SummaryMetrics,
 } from "../lib/api";
 import StatusBadge from "./components/StatusBadge";
 import GoalForm from "./components/GoalForm";
 import TaskForm from "./components/TaskForm";
 import ConfirmDialog from "./components/ConfirmDialog";
+import { SummaryMetricsCards } from "./components/SummaryMetricsCards";
+import { ActivityFeed } from "./components/ActivityFeed";
 
 // ─── Filter tab types ─────────────────────────────────────────────────────────
 
@@ -66,6 +72,8 @@ function TrashIcon() {
 export default function Home() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activities, setActivities] = useState<ActivityEvent[]>([]);
+  const [metrics, setMetrics] = useState<SummaryMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,12 +97,16 @@ export default function Home() {
 
   const loadData = useCallback(async () => {
     try {
-      const [goalsRes, tasksRes] = await Promise.all([
+      const [goalsRes, tasksRes, activitiesRes, metricsRes] = await Promise.all([
         fetchGoals(),
         fetchTasks(),
+        fetchActivities({ page_size: 10 }),
+        fetchSummaryMetrics(),
       ]);
       setGoals(goalsRes.items);
       setTasks(tasksRes.items);
+      setActivities(activitiesRes.items);
+      setMetrics(metricsRes);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data.");
@@ -158,6 +170,8 @@ export default function Home() {
           <p className="loading">Loading…</p>
         ) : (
           <div className="dashboard">
+            <SummaryMetricsCards metrics={metrics} loading={loading} />
+
             {/* ── Goals section ────────────────────────────────────────────── */}
             <section aria-labelledby="goals-heading">
               <div className="section-header">
@@ -347,6 +361,8 @@ export default function Home() {
                 </ul>
               )}
             </section>
+
+            <ActivityFeed activities={activities} loading={loading} />
           </div>
         )}
       </main>

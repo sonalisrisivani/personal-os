@@ -82,3 +82,31 @@ class PaginatedResponse(BaseModel, Generic[T]):
     total: int
     page: int
     page_size: int
+
+
+# --- Activity schemas ---
+
+class ActivityEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    event_type: str
+    entity_type: str
+    entity_id: Optional[uuid.UUID]
+    title: str
+    details: Optional[str]
+    created_at: datetime
+
+
+# --- Metrics schemas ---
+
+class SummaryMetricsResponse(BaseModel):
+    total_goals: int
+    active_goals: int
+    completed_goals: int
+    archived_goals: int
+    total_tasks: int
+    pending_tasks: int
+    in_progress_tasks: int
+    done_tasks: int
+    overdue_tasks: int
