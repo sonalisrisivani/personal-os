@@ -1,0 +1,30 @@
+%% Personal Career OS execution map
+%% Source of truth for execution order and completion status.
+%% Status legend: PENDING, ACTIVE, DONE, BLOCKED.
+%% Before each implementation turn: read this map first.
+%% After each completed block: change its STATUS and update the matching SQL todo.
+
+flowchart TD
+    START([START]) --> R["R0 Create private GitHub repository<br/>STATUS: ACTIVE"]
+    R --> F["F1 Foundation + local deployment<br/>STATUS: PENDING"]
+    F --> G["F2 Goals + tasks vertical slice<br/>STATUS: PENDING"]
+    G --> A["F3 Dashboard + activity tracking<br/>STATUS: PENDING"]
+    A --> E["F4 Job applications + recruitment email automation<br/>STATUS: PENDING"]
+    E --> I["F5 Projects + AI agent<br/>STATUS: PENDING"]
+    I --> V["V Validation gate<br/>STATUS: PENDING"]
+    V --> DONE([USABLE INCREMENTAL RELEASE])
+
+    F -.-> Fscope["Docker Compose, Next.js, FastAPI, PostgreSQL, n8n,<br/>single-user auth, env example, health checks"]
+    R -.-> Rscope["Private repo, main branch, focused checkpoint commits"]
+    G -.-> Gscope["Goals, tasks, priorities, due dates,<br/>typed API, dashboard CRUD, focused tests"]
+    A -.-> Ascope["Activity events, recent feed, summary metrics,<br/>responsive and accessible states"]
+    E -.-> Escope["Applications, reminders, authenticated ingestion,<br/>idempotent Gmail/IMAP n8n workflow"]
+    I -.-> Iscope["Projects, provider-agnostic model adapter,<br/>approval-based explainable suggestions"]
+    V -.-> Vscope["Targeted tests, type checks, lint, Compose health,<br/>docs and backup/restore verification"]
+
+    classDef pending fill:#fff3cd,stroke:#b8860b,color:#111;
+    classDef active fill:#cfe2ff,stroke:#0d6efd,color:#111;
+    classDef done fill:#d1e7dd,stroke:#198754,color:#111;
+    classDef blocked fill:#f8d7da,stroke:#dc3545,color:#111;
+    class F,G,A,E,I,V pending;
+    class R active;
