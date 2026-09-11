@@ -112,6 +112,8 @@ class SummaryMetricsResponse(BaseModel):
     overdue_tasks: int
     total_applications: int = 0
     active_applications: int = 0
+    total_projects: int = 0
+    active_projects: int = 0
 
 
 # --- Application Reminder schemas ---
@@ -200,4 +202,55 @@ class EmailIngestPayload(BaseModel):
     notes: Optional[str] = None
     applied_at: Optional[date] = None
     source: str = "email_ingest"
+
+
+# --- Project schemas ---
+
+class ProjectCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: str = "active"
+    repo_url: Optional[str] = None
+    demo_url: Optional[str] = None
+    tech_stack: Optional[str] = None
+    goal_id: Optional[uuid.UUID] = None
+
+
+class ProjectUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    repo_url: Optional[str] = None
+    demo_url: Optional[str] = None
+    tech_stack: Optional[str] = None
+    goal_id: Optional[uuid.UUID] = None
+
+
+class ProjectResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    title: str
+    description: Optional[str]
+    status: str
+    repo_url: Optional[str]
+    demo_url: Optional[str]
+    tech_stack: Optional[str]
+    goal_id: Optional[uuid.UUID]
+    created_at: datetime
+    updated_at: datetime
+
+
+class AgentRunResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    project_id: uuid.UUID
+    prompt: str
+    suggestion_data: dict
+    status: str
+    model_provider: str
+    explanation: str
+    created_at: datetime
+    updated_at: datetime
 

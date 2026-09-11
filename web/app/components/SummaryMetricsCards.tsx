@@ -58,6 +58,14 @@ export function SummaryMetricsCards({
         </span>
       </div>
 
+      <div className="metric-card">
+        <span className="metric-label">Active Projects</span>
+        <span className="metric-value">{metrics.active_projects ?? 0}</span>
+        <span className="metric-subtext">
+          of {metrics.total_projects ?? 0} total
+        </span>
+      </div>
+
       <div
         className={`metric-card ${
           metrics.overdue_tasks > 0 ? "metric-warning" : ""

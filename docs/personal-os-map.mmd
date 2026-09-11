@@ -10,8 +10,8 @@ flowchart TD
     F --> G["F2 Goals + tasks vertical slice<br/>STATUS: DONE"]
     G --> A["F3 Dashboard + activity tracking<br/>STATUS: DONE"]
     A --> E["F4 Job applications + recruitment email automation<br/>STATUS: DONE"]
-    E --> I["F5 Projects + AI agent<br/>STATUS: ACTIVE"]
-    I --> V["V Validation gate<br/>STATUS: PENDING"]
+    E --> I["F5 Projects + AI agent<br/>STATUS: DONE"]
+    I --> V["V Validation gate<br/>STATUS: ACTIVE"]
     V --> DONE([USABLE INCREMENTAL RELEASE])
 
     F -.-> Fscope["Docker Compose, Next.js, FastAPI, PostgreSQL, n8n,<br/>single-user auth, env example, health checks"]
@@ -26,9 +26,5 @@ flowchart TD
     classDef active fill:#cfe2ff,stroke:#0d6efd,color:#111;
     classDef done fill:#d1e7dd,stroke:#198754,color:#111;
     classDef blocked fill:#f8d7da,stroke:#dc3545,color:#111;
-    class I,V pending;
-    class E active;
-    class A done;
-    class G done;
-    class F done;
-    class R done;
+    class V active;
+    class I,E,A,G,F,R done;

@@ -189,6 +189,8 @@ h1 {
 .status-badge--done      { background: #d4edda; color: #155724; }
 .status-badge--archived  { background: #e9ecef; color: #555; }
 .status-badge--todo      { background: #f0f0f0; color: #555; }
+.status-badge--on_hold   { background: #f3f4f6; color: #4b5563; }
+.status-badge--in_progress,
 .status-badge--in-progress { background: #fff3cd; color: #856404; }
 
 /* Application-specific status badges */

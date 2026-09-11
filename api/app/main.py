@@ -9,10 +9,12 @@ from pydantic import BaseModel
 
 from .database import Base, engine
 from .routers.activities import router as activities_router
+from .routers.agent_runs import router as agent_runs_router
 from .routers.applications import router as applications_router
 from .routers.goals import router as goals_router
 from .routers.metrics import router as metrics_router
 from .routers.tasks import router as tasks_router
+from .routers.projects import router as projects_router
 
 
 @asynccontextmanager
@@ -38,6 +40,8 @@ app.include_router(tasks_router)
 app.include_router(activities_router)
 app.include_router(metrics_router)
 app.include_router(applications_router)
+app.include_router(projects_router)
+app.include_router(agent_runs_router)
 
 
 class HealthResponse(BaseModel):

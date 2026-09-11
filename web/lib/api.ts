@@ -46,6 +46,8 @@ export interface SummaryMetrics {
   overdue_tasks: number;
   total_applications?: number;
   active_applications?: number;
+  total_projects?: number;
+  active_projects?: number;
 }
 
 export interface ApplicationReminder {
@@ -72,6 +74,43 @@ export interface JobApplication {
   source: string;
   external_id: string | null;
   reminders: ApplicationReminder[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  status: "active" | "in_progress" | "completed" | "on_hold" | "archived";
+  repo_url: string | null;
+  demo_url: string | null;
+  tech_stack: string | null;
+  goal_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SuggestedTask {
+  title: string;
+  description: string;
+  priority: number;
+}
+
+export interface SuggestionData {
+  explanation: string;
+  suggested_tasks: SuggestedTask[];
+  recommended_milestone: string;
+}
+
+export interface AgentRun {
+  id: string;
+  project_id: string;
+  prompt: string;
+  suggestion_data: SuggestionData;
+  status: "pending" | "approved" | "rejected";
+  model_provider: string;
+  explanation: string;
   created_at: string;
   updated_at: string;
 }
@@ -258,5 +297,78 @@ export async function updateApplicationReminder(
   return request<ApplicationReminder>(`/applications/reminders/${reminderId}`, {
     method: "PATCH",
     body: JSON.stringify(data),
+  });
+}
+
+// ─── Projects ────────────────────────────────────────────────────────────────
+
+export async function fetchProjects(
+  status?: string,
+): Promise<PaginatedResponse<Project>> {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  const qs = params.size ? `?${params}` : "";
+  return request<PaginatedResponse<Project>>(`/projects${qs}`);
+}
+
+export async function createProject(data: {
+  title: string;
+  description?: string;
+  status?: string;
+  repo_url?: string;
+  demo_url?: string;
+  tech_stack?: string;
+  goal_id?: string;
+}): Promise<Project> {
+  return request<Project>("/projects", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateProject(
+  id: string,
+  data: Partial<Project>,
+): Promise<Project> {
+  return request<Project>(`/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  return request<void>(`/projects/${id}`, { method: "DELETE" });
+}
+
+// ─── AI Agent Runs ───────────────────────────────────────────────────────────
+
+export async function generateProjectSuggestions(
+  projectId: string,
+  prompt: string,
+): Promise<AgentRun> {
+  const params = new URLSearchParams({ prompt });
+  return request<AgentRun>(`/agent-runs/projects/${projectId}/suggestions?${params}`, {
+    method: "POST",
+  });
+}
+
+export async function fetchAgentRuns(
+  status?: string,
+): Promise<PaginatedResponse<AgentRun>> {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  const qs = params.size ? `?${params}` : "";
+  return request<PaginatedResponse<AgentRun>>(`/agent-runs${qs}`);
+}
+
+export async function approveAgentRun(runId: string): Promise<AgentRun> {
+  return request<AgentRun>(`/agent-runs/${runId}/approve`, {
+    method: "POST",
+  });
+}
+
+export async function rejectAgentRun(runId: string): Promise<AgentRun> {
+  return request<AgentRun>(`/agent-runs/${runId}/reject`, {
+    method: "POST",
   });
 }

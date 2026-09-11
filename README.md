@@ -15,5 +15,5 @@ Each completed map block is delivered as a focused commit. The first usable appl
 - F2 goals and tasks: done
 - F3 dashboard and activity tracking: done
 - F4 job applications and recruitment email automation: done
-- F5 projects and AI agent: active
-- V validation gate: pending
+- F5 projects and AI agent: done
+- V validation gate: active

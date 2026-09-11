@@ -4,7 +4,7 @@ import uuid
 from datetime import date, datetime, timezone
 from typing import Optional
 
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import ForeignKey, String, func, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -26,17 +26,20 @@ class Goal(Base, BaseMixin):
     priority: Mapped[int] = mapped_column(default=0)
     due_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     tasks: Mapped[list["Task"]] = relationship(back_populates="goal")
+    projects: Mapped[list["Project"]] = relationship(back_populates="goal")
 
 
 class Task(Base, BaseMixin):
     __tablename__ = "tasks"
     goal_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("goals.id"), nullable=True)
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("projects.id"), nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="todo")
     priority: Mapped[int] = mapped_column(default=0)
     due_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     goal: Mapped[Optional["Goal"]] = relationship(back_populates="tasks")
+    project: Mapped[Optional["Project"]] = relationship(back_populates="tasks")
 
 
 class ActivityEvent(Base, BaseMixin):
@@ -73,3 +76,32 @@ class ApplicationReminder(Base, BaseMixin):
     is_completed: Mapped[bool] = mapped_column(default=False)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     application: Mapped["JobApplication"] = relationship(back_populates="reminders")
+
+
+class Project(Base, BaseMixin):
+    __tablename__ = "projects"
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    status: Mapped[str] = mapped_column(String, default="active")
+    repo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    demo_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tech_stack: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    goal_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("goals.id"), nullable=True)
+
+    goal: Mapped[Optional["Goal"]] = relationship(back_populates="projects")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="project")
+    agent_runs: Mapped[list["AgentRun"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+
+
+class AgentRun(Base, BaseMixin):
+    __tablename__ = "agent_runs"
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    prompt: Mapped[str] = mapped_column(String, nullable=False)
+    suggestion_data: Mapped[dict] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String, default="pending")  # pending, approved, rejected
+    model_provider: Mapped[str] = mapped_column(String, default="heuristic_rules")
+    explanation: Mapped[str] = mapped_column(String, nullable=False)
+
+    project: Mapped["Project"] = relationship(back_populates="agent_runs")

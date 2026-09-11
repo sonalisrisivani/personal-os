@@ -4,25 +4,31 @@ import { useState, useEffect, useCallback } from "react";
 import {
   fetchGoals,
   fetchTasks,
+  fetchProjects,
   fetchActivities,
   fetchSummaryMetrics,
   fetchApplications,
   deleteGoal,
   deleteTask,
+  deleteProject,
   deleteApplication,
   updateApplicationReminder,
   Goal,
   Task,
+  Project,
   ActivityEvent,
   SummaryMetrics,
   JobApplication,
 } from "../lib/api";
 import StatusBadge from "./components/StatusBadge";
 import ApplicationStatusBadge from "./components/ApplicationStatusBadge";
+import ProjectStatusBadge from "./components/ProjectStatusBadge";
 import GoalForm from "./components/GoalForm";
 import TaskForm from "./components/TaskForm";
+import ProjectForm from "./components/ProjectForm";
 import ApplicationForm from "./components/ApplicationForm";
 import ReminderForm from "./components/ReminderForm";
+import ProjectSuggestionModal from "./components/ProjectSuggestionModal";
 import ConfirmDialog from "./components/ConfirmDialog";
 import { SummaryMetricsCards } from "./components/SummaryMetricsCards";
 import { ActivityFeed } from "./components/ActivityFeed";
@@ -31,9 +37,19 @@ import { ActivityFeed } from "./components/ActivityFeed";
 
 type GoalFilter = "all" | "active" | "completed" | "archived";
 type TaskFilter = "all" | "todo" | "in_progress" | "done";
+type ProjectFilter = "all" | "active" | "in_progress" | "completed" | "on_hold" | "archived";
 type AppFilter  = "all" | "applied" | "screening" | "interviewing" | "offered" | "rejected" | "withdrawn";
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
+
+function SparklesIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+      <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+    </svg>
+  );
+}
 
 function EditIcon() {
   return (
@@ -121,6 +137,7 @@ function SectionHeading({
 export default function Home() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [metrics, setMetrics] = useState<SummaryMetrics | null>(null);
@@ -129,25 +146,30 @@ export default function Home() {
 
   const [goalFilter, setGoalFilter] = useState<GoalFilter>("all");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  const [projectFilter, setProjectFilter] = useState<ProjectFilter>("active");
   const [appFilter, setAppFilter] = useState<AppFilter>("all");
 
   const [goalForm, setGoalForm] = useState<{ open: boolean; goal?: Goal | null }>({ open: false });
   const [taskForm, setTaskForm] = useState<{ open: boolean; task?: Task | null }>({ open: false });
+  const [projectForm, setProjectForm] = useState<{ open: boolean; project?: Project | null }>({ open: false });
+  const [agentModal, setAgentModal] = useState<{ open: boolean; project?: Project | null }>({ open: false });
   const [appForm, setAppForm] = useState<{ open: boolean; application?: JobApplication | null }>({ open: false });
   const [reminderForm, setReminderForm] = useState<{ open: boolean; applicationId?: string }>({ open: false });
   const [confirm, setConfirm] = useState<{ open: boolean; message: string; onConfirm: () => void } | null>(null);
 
   const loadData = useCallback(async () => {
     try {
-      const [goalsRes, tasksRes, appsRes, activitiesRes, metricsRes] = await Promise.all([
+      const [goalsRes, tasksRes, projectsRes, appsRes, activitiesRes, metricsRes] = await Promise.all([
         fetchGoals(),
         fetchTasks(),
+        fetchProjects(),
         fetchApplications(),
         fetchActivities({ page_size: 10 }),
         fetchSummaryMetrics(),
       ]);
       setGoals(goalsRes.items);
       setTasks(tasksRes.items);
+      setProjects(projectsRes.items);
       setApplications(appsRes.items);
       setActivities(activitiesRes.items);
       setMetrics(metricsRes);
@@ -163,6 +185,7 @@ export default function Home() {
 
   const visibleGoals = goalFilter === "all" ? goals : goals.filter((g) => g.status === goalFilter);
   const visibleTasks = taskFilter === "all" ? tasks : tasks.filter((t) => t.status === taskFilter);
+  const visibleProjects = projectFilter === "all" ? projects : projects.filter((p) => p.status === projectFilter);
   const visibleApps  = appFilter  === "all" ? applications : applications.filter((a) => a.status === appFilter);
 
   function askDelete(message: string, onConfirm: () => Promise<void>) {
@@ -237,6 +260,49 @@ export default function Home() {
                       <div className="actions">
                         <button className="action-btn" aria-label="Edit goal" onClick={() => setGoalForm({ open: true, goal: g })}><EditIcon /></button>
                         <button className="action-btn action-btn--danger" aria-label="Delete goal" onClick={() => askDelete(`Delete goal "${g.title}"?`, () => deleteGoal(g.id))}><TrashIcon /></button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Projects */}
+            <section aria-labelledby="projects-heading" className="card-section">
+              <SectionHeading
+                id="projects-heading"
+                title="Projects"
+                count={visibleProjects.length}
+                onAdd={() => setProjectForm({ open: true, project: null })}
+                addLabel="Add Project"
+              />
+              <FilterTabs
+                options={[["all","All"],["active","Active"],["in_progress","In Progress"],["completed","Completed"],["on_hold","On Hold"],["archived","Archived"]]}
+                value={projectFilter}
+                onChange={setProjectFilter}
+                label="Filter projects"
+              />
+              {visibleProjects.length === 0 ? (
+                <p className="empty-hint">No active projects — track your technical work here.</p>
+              ) : (
+                <ul className="item-list">
+                  {visibleProjects.map((p) => (
+                    <li key={p.id} className="item">
+                      <div className="item__main">
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <span className="item__title">{p.title}</span>
+                          <ProjectStatusBadge status={p.status} />
+                        </div>
+                        <div className="item__meta">
+                          {p.tech_stack && p.tech_stack.split(',').map(t => <span key={t} className="pill">{t.trim()}</span>)}
+                          {p.repo_url && <a href={p.repo_url} target="_blank" className="muted" style={{textDecoration: 'none'}}>Repo</a>}
+                        </div>
+                        {p.description && <p className="item__desc">{p.description}</p>}
+                      </div>
+                      <div className="actions">
+                        <button className="action-btn" aria-label="Ask AI Agent" title="⚡ Ask AI Agent" onClick={() => setAgentModal({ open: true, project: p })}><SparklesIcon /></button>
+                        <button className="action-btn" aria-label="Edit project" onClick={() => setProjectForm({ open: true, project: p })}><EditIcon /></button>
+                        <button className="action-btn action-btn--danger" aria-label="Delete project" onClick={() => askDelete(`Delete project "${p.title}"?`, () => deleteProject(p.id))}><TrashIcon /></button>
                       </div>
                     </li>
                   ))}
@@ -355,11 +421,20 @@ export default function Home() {
 
       {/* ── Modals ────────────────────────────────────────────────────────── */}
 
-      {goalForm.open && (
-        <GoalForm
-          goal={goalForm.goal}
-          onSave={() => { setGoalForm({ open: false }); loadData(); }}
-          onClose={() => setGoalForm({ open: false })}
+      {projectForm.open && (
+        <ProjectForm
+          project={projectForm.project}
+          goals={goals}
+          onSave={() => { setProjectForm({ open: false }); loadData(); }}
+          onClose={() => setProjectForm({ open: false })}
+        />
+      )}
+
+      {agentModal.open && agentModal.project && (
+        <ProjectSuggestionModal
+          project={agentModal.project}
+          onSuccess={() => { setAgentModal({ open: false }); loadData(); }}
+          onClose={() => setAgentModal({ open: false })}
         />
       )}
 
