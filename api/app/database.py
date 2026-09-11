@@ -5,9 +5,14 @@ import os
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://career_os:change-me@localhost:5432/career_os")
+# Default to SQLite for local development if DATABASE_URL is not set in environment
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./personal_os.db")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+# Normalize postgresql:// to postgresql+asyncpg:// for async engine support
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+engine = create_async_engine(DATABASE_URL, echo=False)
 async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
