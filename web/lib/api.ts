@@ -44,6 +44,36 @@ export interface SummaryMetrics {
   in_progress_tasks: number;
   done_tasks: number;
   overdue_tasks: number;
+  total_applications?: number;
+  active_applications?: number;
+}
+
+export interface ApplicationReminder {
+  id: string;
+  application_id: string;
+  reminder_type: "follow_up" | "interview_prep" | "deadline" | string;
+  due_date: string;
+  is_completed: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobApplication {
+  id: string;
+  company: string;
+  role: string;
+  status: "applied" | "screening" | "interviewing" | "offered" | "rejected" | "withdrawn";
+  location: string | null;
+  job_url: string | null;
+  salary_range: string | null;
+  applied_at: string | null;
+  notes: string | null;
+  source: string;
+  external_id: string | null;
+  reminders: ApplicationReminder[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -162,4 +192,71 @@ export async function fetchActivities(params?: {
 
 export async function fetchSummaryMetrics(): Promise<SummaryMetrics> {
   return request<SummaryMetrics>("/metrics/summary");
+}
+
+// ─── Applications ────────────────────────────────────────────────────────────
+
+export async function fetchApplications(
+  status?: string,
+): Promise<PaginatedResponse<JobApplication>> {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  const qs = params.size ? `?${params}` : "";
+  return request<PaginatedResponse<JobApplication>>(`/applications${qs}`);
+}
+
+export async function createApplication(data: {
+  company: string;
+  role: string;
+  status?: string;
+  location?: string;
+  job_url?: string;
+  salary_range?: string;
+  applied_at?: string;
+  notes?: string;
+}): Promise<JobApplication> {
+  return request<JobApplication>("/applications", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateApplication(
+  id: string,
+  data: Partial<JobApplication>,
+): Promise<JobApplication> {
+  return request<JobApplication>(`/applications/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteApplication(id: string): Promise<void> {
+  return request<void>(`/applications/${id}`, { method: "DELETE" });
+}
+
+// ─── Application Reminders ───────────────────────────────────────────────────
+
+export async function createApplicationReminder(
+  applicationId: string,
+  data: {
+    reminder_type?: string;
+    due_date: string;
+    notes?: string;
+  },
+): Promise<ApplicationReminder> {
+  return request<ApplicationReminder>(`/applications/${applicationId}/reminders`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateApplicationReminder(
+  reminderId: string,
+  data: Partial<ApplicationReminder>,
+): Promise<ApplicationReminder> {
+  return request<ApplicationReminder>(`/applications/reminders/${reminderId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }

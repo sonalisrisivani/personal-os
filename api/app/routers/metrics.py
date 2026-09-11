@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
-from ..models import Goal, Task
+from ..models import Goal, JobApplication, Task
 from ..schemas import SummaryMetricsResponse
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -61,6 +61,15 @@ async def get_summary_metrics(db: AsyncSession = Depends(get_db)) -> SummaryMetr
     )
     overdue_tasks = overdue_tasks_res.scalar_one()
 
+    # Applications metrics
+    total_applications_res = await db.execute(select(func.count()).select_from(JobApplication))
+    total_applications = total_applications_res.scalar_one()
+
+    active_applications_res = await db.execute(
+        select(func.count()).select_from(JobApplication).where(JobApplication.status.in_(["applied", "screening", "interviewing", "offered"]))
+    )
+    active_applications = active_applications_res.scalar_one()
+
     return SummaryMetricsResponse(
         total_goals=total_goals,
         active_goals=active_goals,
@@ -71,4 +80,6 @@ async def get_summary_metrics(db: AsyncSession = Depends(get_db)) -> SummaryMetr
         in_progress_tasks=in_progress_tasks,
         done_tasks=done_tasks,
         overdue_tasks=overdue_tasks,
+        total_applications=total_applications,
+        active_applications=active_applications,
     )

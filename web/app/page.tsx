@@ -6,16 +6,23 @@ import {
   fetchTasks,
   fetchActivities,
   fetchSummaryMetrics,
+  fetchApplications,
   deleteGoal,
   deleteTask,
+  deleteApplication,
+  updateApplicationReminder,
   Goal,
   Task,
   ActivityEvent,
   SummaryMetrics,
+  JobApplication,
 } from "../lib/api";
 import StatusBadge from "./components/StatusBadge";
+import ApplicationStatusBadge from "./components/ApplicationStatusBadge";
 import GoalForm from "./components/GoalForm";
 import TaskForm from "./components/TaskForm";
+import ApplicationForm from "./components/ApplicationForm";
+import ReminderForm from "./components/ReminderForm";
 import ConfirmDialog from "./components/ConfirmDialog";
 import { SummaryMetricsCards } from "./components/SummaryMetricsCards";
 import { ActivityFeed } from "./components/ActivityFeed";
@@ -24,6 +31,7 @@ import { ActivityFeed } from "./components/ActivityFeed";
 
 type GoalFilter = "all" | "active" | "completed" | "archived";
 type TaskFilter = "all" | "todo" | "in_progress" | "done";
+type ApplicationFilter = "all" | "applied" | "screening" | "interviewing" | "offered" | "rejected" | "withdrawn";
 
 // ─── Small icon components ────────────────────────────────────────────────────
 
@@ -67,11 +75,32 @@ function TrashIcon() {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </svg>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [metrics, setMetrics] = useState<SummaryMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +108,7 @@ export default function Home() {
 
   const [goalFilter, setGoalFilter] = useState<GoalFilter>("all");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  const [appFilter, setAppFilter] = useState<ApplicationFilter>("all");
 
   const [goalForm, setGoalForm] = useState<{
     open: boolean;
@@ -87,6 +117,14 @@ export default function Home() {
   const [taskForm, setTaskForm] = useState<{
     open: boolean;
     task?: Task | null;
+  }>({ open: false });
+  const [appForm, setAppForm] = useState<{
+    open: boolean;
+    application?: JobApplication | null;
+  }>({ open: false });
+  const [reminderForm, setReminderForm] = useState<{
+    open: boolean;
+    applicationId?: string;
   }>({ open: false });
 
   const [confirm, setConfirm] = useState<{
@@ -97,14 +135,16 @@ export default function Home() {
 
   const loadData = useCallback(async () => {
     try {
-      const [goalsRes, tasksRes, activitiesRes, metricsRes] = await Promise.all([
+      const [goalsRes, tasksRes, appsRes, activitiesRes, metricsRes] = await Promise.all([
         fetchGoals(),
         fetchTasks(),
+        fetchApplications(),
         fetchActivities({ page_size: 10 }),
         fetchSummaryMetrics(),
       ]);
       setGoals(goalsRes.items);
       setTasks(tasksRes.items);
+      setApplications(appsRes.items);
       setActivities(activitiesRes.items);
       setMetrics(metricsRes);
       setError(null);
@@ -126,6 +166,9 @@ export default function Home() {
 
   const visibleTasks =
     taskFilter === "all" ? tasks : tasks.filter((t) => t.status === taskFilter);
+
+  const visibleApplications =
+    appFilter === "all" ? applications : applications.filter((a) => a.status === appFilter);
 
   // ── Delete helpers ──────────────────────────────────────────────────────────
 
@@ -151,6 +194,27 @@ export default function Home() {
         loadData();
       },
     });
+  }
+
+  function confirmDeleteApp(app: JobApplication) {
+    setConfirm({
+      open: true,
+      message: `Delete application for "${app.role} at ${app.company}"? This cannot be undone.`,
+      onConfirm: async () => {
+        await deleteApplication(app.id);
+        setConfirm(null);
+        loadData();
+      },
+    });
+  }
+
+  async function toggleReminder(reminderId: string, currentCompleted: boolean) {
+    try {
+      await updateApplicationReminder(reminderId, { is_completed: !currentCompleted });
+      loadData();
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -362,6 +426,133 @@ export default function Home() {
               )}
             </section>
 
+            {/* ── Applications section ─────────────────────────────────────── */}
+            <section aria-labelledby="apps-heading">
+              <div className="section-header">
+                <h2 id="apps-heading">
+                  Job Applications
+                  <span className="count">{visibleApplications.length}</span>
+                </h2>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setAppForm({ open: true, application: null })}
+                >
+                  + Add Application
+                </button>
+              </div>
+
+              <div className="filter-tabs" role="tablist" aria-label="Filter applications">
+                {(
+                  [
+                    ["all", "All"],
+                    ["applied", "Applied"],
+                    ["screening", "Screening"],
+                    ["interviewing", "Interviewing"],
+                    ["offered", "Offered"],
+                    ["rejected", "Rejected"],
+                    ["withdrawn", "Withdrawn"],
+                  ] as [ApplicationFilter, string][]
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    role="tab"
+                    aria-selected={appFilter === value}
+                    className={`filter-tab${appFilter === value ? " filter-tab--active" : ""}`}
+                    onClick={() => setAppFilter(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {visibleApplications.length === 0 ? (
+                <div className="empty-state">
+                  <p>No job applications tracked yet.</p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setAppForm({ open: true, application: null })}
+                  >
+                    + Add Application
+                  </button>
+                </div>
+              ) : (
+                <ul className="item-list" aria-label="Applications list">
+                  {visibleApplications.map((app) => (
+                    <li key={app.id} className="item">
+                      <div className="item__main">
+                        <span className="item__title">
+                          {app.role} <span style={{ color: "#79867c" }}>at</span> {app.company}
+                        </span>
+                        <div className="item__meta">
+                          <ApplicationStatusBadge status={app.status} />
+                          {app.location && (
+                            <span className="goal-label">{app.location}</span>
+                          )}
+                          {app.applied_at && (
+                            <span className="due-date">Applied {app.applied_at}</span>
+                          )}
+                        </div>
+                        {app.notes && <p className="item__desc">{app.notes}</p>}
+
+                        {/* Reminders List */}
+                        {app.reminders && app.reminders.length > 0 && (
+                          <div style={{ marginTop: "8px" }}>
+                            {app.reminders.map((r) => (
+                              <div
+                                key={r.id}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                  fontSize: "0.85rem",
+                                  marginTop: "4px",
+                                  textDecoration: r.is_completed ? "line-through" : "none",
+                                  color: r.is_completed ? "#79867c" : "#18221b",
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={r.is_completed}
+                                  onChange={() => toggleReminder(r.id, r.is_completed)}
+                                />
+                                <span>
+                                  🔔 <strong>{r.reminder_type}</strong> due {new Date(r.due_date).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="actions">
+                        <button
+                          className="action-btn"
+                          aria-label={`Add reminder for: ${app.company}`}
+                          title="Add Reminder"
+                          onClick={() => setReminderForm({ open: true, applicationId: app.id })}
+                        >
+                          <BellIcon />
+                        </button>
+                        <button
+                          className="action-btn"
+                          aria-label={`Edit application: ${app.company}`}
+                          onClick={() => setAppForm({ open: true, application: app })}
+                        >
+                          <PencilIcon />
+                        </button>
+                        <button
+                          className="action-btn action-btn--danger"
+                          aria-label={`Delete application: ${app.company}`}
+                          onClick={() => confirmDeleteApp(app)}
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
             <ActivityFeed activities={activities} loading={loading} />
           </div>
         )}
@@ -389,6 +580,28 @@ export default function Home() {
             loadData();
           }}
           onClose={() => setTaskForm({ open: false })}
+        />
+      )}
+
+      {appForm.open && (
+        <ApplicationForm
+          application={appForm.application}
+          onSave={() => {
+            setAppForm({ open: false });
+            loadData();
+          }}
+          onClose={() => setAppForm({ open: false })}
+        />
+      )}
+
+      {reminderForm.open && reminderForm.applicationId && (
+        <ReminderForm
+          applicationId={reminderForm.applicationId}
+          onSave={() => {
+            setReminderForm({ open: false });
+            loadData();
+          }}
+          onClose={() => setReminderForm({ open: false })}
         />
       )}
 

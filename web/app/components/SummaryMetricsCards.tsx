@@ -19,6 +19,7 @@ export function SummaryMetricsCards({
         <div className="metric-card skeleton" />
         <div className="metric-card skeleton" />
         <div className="metric-card skeleton" />
+        <div className="metric-card skeleton" />
       </div>
     );
   }
@@ -47,6 +48,14 @@ export function SummaryMetricsCards({
         <span className="metric-label">Completed Tasks</span>
         <span className="metric-value">{metrics.done_tasks}</span>
         <span className="metric-subtext">of {metrics.total_tasks} total</span>
+      </div>
+
+      <div className="metric-card">
+        <span className="metric-label">Applications</span>
+        <span className="metric-value">{metrics.active_applications ?? 0}</span>
+        <span className="metric-subtext">
+          of {metrics.total_applications ?? 0} total active
+        </span>
       </div>
 
       <div

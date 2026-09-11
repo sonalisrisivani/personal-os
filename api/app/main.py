@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from .database import Base, engine
 from .routers.activities import router as activities_router
+from .routers.applications import router as applications_router
 from .routers.goals import router as goals_router
 from .routers.metrics import router as metrics_router
 from .routers.tasks import router as tasks_router
@@ -25,6 +26,7 @@ app.include_router(goals_router)
 app.include_router(tasks_router)
 app.include_router(activities_router)
 app.include_router(metrics_router)
+app.include_router(applications_router)
 
 
 class HealthResponse(BaseModel):

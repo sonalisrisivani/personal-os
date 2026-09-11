@@ -46,3 +46,30 @@ class ActivityEvent(Base, BaseMixin):
     entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(nullable=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     details: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class JobApplication(Base, BaseMixin):
+    __tablename__ = "job_applications"
+    company: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[str] = mapped_column(String, default="applied")  # applied, screening, interviewing, offered, rejected, withdrawn
+    location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    job_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    salary_range: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    applied_at: Mapped[Optional[date]] = mapped_column(nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, default="manual")  # manual, email_ingest
+    external_id: Mapped[Optional[str]] = mapped_column(String, unique=True, index=True, nullable=True)
+    reminders: Mapped[list["ApplicationReminder"]] = relationship(
+        back_populates="application", cascade="all, delete-orphan"
+    )
+
+
+class ApplicationReminder(Base, BaseMixin):
+    __tablename__ = "application_reminders"
+    application_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("job_applications.id"), nullable=False)
+    reminder_type: Mapped[str] = mapped_column(String, default="follow_up")  # follow_up, interview_prep, deadline
+    due_date: Mapped[datetime] = mapped_column(nullable=False)
+    is_completed: Mapped[bool] = mapped_column(default=False)
+    notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    application: Mapped["JobApplication"] = relationship(back_populates="reminders")
