@@ -16,10 +16,12 @@ export interface Goal {
 export interface Task {
   id: string;
   goal_id: string | null;
+  project_id?: string | null;
   title: string;
   description: string | null;
   status: "todo" | "in_progress" | "done";
   priority: number;
+  order_index?: number;
   due_date: string | null;
   created_at: string;
   updated_at: string;
@@ -153,6 +155,7 @@ export async function createGoal(data: {
   description?: string;
   priority?: number;
   due_date?: string;
+  status?: "active" | "completed" | "archived";
 }): Promise<Goal> {
   return request<Goal>("/goals", {
     method: "POST",
@@ -179,10 +182,12 @@ export async function deleteGoal(id: string): Promise<void> {
 export async function fetchTasks(filters?: {
   status?: string;
   goal_id?: string;
+  project_id?: string;
 }): Promise<PaginatedResponse<Task>> {
   const params = new URLSearchParams();
   if (filters?.status) params.set("status", filters.status);
   if (filters?.goal_id) params.set("goal_id", filters.goal_id);
+  if (filters?.project_id) params.set("project_id", filters.project_id);
   const qs = params.size ? `?${params}` : "";
   return request<PaginatedResponse<Task>>(`/tasks${qs}`);
 }
@@ -190,8 +195,10 @@ export async function fetchTasks(filters?: {
 export async function createTask(data: {
   title: string;
   goal_id?: string;
+  project_id?: string;
   description?: string;
   priority?: number;
+  order_index?: number;
   due_date?: string;
 }): Promise<Task> {
   return request<Task>("/tasks", {
@@ -212,6 +219,17 @@ export async function updateTask(
 
 export async function deleteTask(id: string): Promise<void> {
   return request<void>(`/tasks/${id}`, { method: "DELETE" });
+}
+
+export async function reorderTasks(taskIds: string[], params?: { goal_id?: string; project_id?: string }): Promise<Task[]> {
+  const query = new URLSearchParams();
+  if (params?.goal_id) query.set("goal_id", params.goal_id);
+  if (params?.project_id) query.set("project_id", params.project_id);
+  const qs = query.size ? `?${query}` : "";
+  return request<Task[]>(`/tasks/reorder${qs}`, {
+    method: "POST",
+    body: JSON.stringify({ task_ids: taskIds }),
+  });
 }
 
 // ─── Activities & Metrics ───────────────────────────────────────────────────
@@ -342,6 +360,16 @@ export async function deleteProject(id: string): Promise<void> {
 
 // ─── AI Agent Runs ───────────────────────────────────────────────────────────
 
+export async function generateGoalSuggestions(
+  goalId: string,
+  prompt: string,
+): Promise<AgentRun> {
+  const params = new URLSearchParams({ prompt });
+  return request<AgentRun>(`/agent-runs/goals/${goalId}/suggestions?${params}`, {
+    method: "POST",
+  });
+}
+
 export async function generateProjectSuggestions(
   projectId: string,
   prompt: string,
@@ -361,9 +389,10 @@ export async function fetchAgentRuns(
   return request<PaginatedResponse<AgentRun>>(`/agent-runs${qs}`);
 }
 
-export async function approveAgentRun(runId: string): Promise<AgentRun> {
+export async function approveAgentRun(runId: string, taskIndices?: number[]): Promise<AgentRun> {
   return request<AgentRun>(`/agent-runs/${runId}/approve`, {
     method: "POST",
+    body: JSON.stringify({ task_indices: taskIndices }),
   });
 }
 

@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import Generic, List, Optional, TypeVar
+from typing import Any, Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 T = TypeVar("T")
+
+
+def _empty_str_to_none(v: Any) -> Any:
+    if v == "" or v is None:
+        return None
+    return v
 
 
 # --- Goal schemas ---
@@ -19,6 +25,11 @@ class GoalCreate(BaseModel):
     priority: int = 0
     due_date: Optional[date] = None
 
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def clean_due_date(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
+
 
 class GoalUpdate(BaseModel):
     title: Optional[str] = None
@@ -26,6 +37,11 @@ class GoalUpdate(BaseModel):
     status: Optional[str] = None
     priority: Optional[int] = None
     due_date: Optional[date] = None
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def clean_due_date(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
 
 
 class GoalResponse(BaseModel):
@@ -45,20 +61,34 @@ class GoalResponse(BaseModel):
 
 class TaskCreate(BaseModel):
     goal_id: Optional[uuid.UUID] = None
+    project_id: Optional[uuid.UUID] = None
     title: str
     description: Optional[str] = None
     status: str = "todo"
     priority: int = 0
+    order_index: int = 0
     due_date: Optional[date] = None
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def clean_due_date(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
 
 
 class TaskUpdate(BaseModel):
     goal_id: Optional[uuid.UUID] = None
+    project_id: Optional[uuid.UUID] = None
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[int] = None
+    order_index: Optional[int] = None
     due_date: Optional[date] = None
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def clean_due_date(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
 
 
 class TaskResponse(BaseModel):
@@ -66,13 +96,23 @@ class TaskResponse(BaseModel):
 
     id: uuid.UUID
     goal_id: Optional[uuid.UUID]
+    project_id: Optional[uuid.UUID] = None
     title: str
     description: Optional[str]
     status: str
     priority: int
+    order_index: int
     due_date: Optional[date]
     created_at: datetime
     updated_at: datetime
+
+
+class TaskReorder(BaseModel):
+    task_ids: List[uuid.UUID]
+
+
+class AgentRunApprove(BaseModel):
+    task_indices: Optional[List[int]] = None
 
 
 # --- Pagination wrapper ---
@@ -123,12 +163,22 @@ class ApplicationReminderCreate(BaseModel):
     due_date: datetime
     notes: Optional[str] = None
 
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def clean_due_date(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
+
 
 class ApplicationReminderUpdate(BaseModel):
     reminder_type: Optional[str] = None
     due_date: Optional[datetime] = None
     is_completed: Optional[bool] = None
     notes: Optional[str] = None
+
+    @field_validator("due_date", mode="before")
+    @classmethod
+    def clean_due_date(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
 
 
 class ApplicationReminderResponse(BaseModel):
@@ -158,6 +208,11 @@ class JobApplicationCreate(BaseModel):
     source: str = "manual"
     external_id: Optional[str] = None
 
+    @field_validator("applied_at", mode="before")
+    @classmethod
+    def clean_applied_at(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
+
 
 class JobApplicationUpdate(BaseModel):
     company: Optional[str] = None
@@ -169,6 +224,11 @@ class JobApplicationUpdate(BaseModel):
     applied_at: Optional[date] = None
     notes: Optional[str] = None
     source: Optional[str] = None
+
+    @field_validator("applied_at", mode="before")
+    @classmethod
+    def clean_applied_at(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
 
 
 class JobApplicationResponse(BaseModel):
@@ -202,6 +262,11 @@ class EmailIngestPayload(BaseModel):
     notes: Optional[str] = None
     applied_at: Optional[date] = None
     source: str = "email_ingest"
+
+    @field_validator("applied_at", mode="before")
+    @classmethod
+    def clean_applied_at(cls, v: Any) -> Any:
+        return _empty_str_to_none(v)
 
 
 # --- Project schemas ---
@@ -245,7 +310,8 @@ class AgentRunResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    project_id: uuid.UUID
+    project_id: Optional[uuid.UUID] = None
+    goal_id: Optional[uuid.UUID] = None
     prompt: str
     suggestion_data: dict
     status: str
@@ -253,4 +319,3 @@ class AgentRunResponse(BaseModel):
     explanation: str
     created_at: datetime
     updated_at: datetime
-

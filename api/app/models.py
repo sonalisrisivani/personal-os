@@ -27,6 +27,9 @@ class Goal(Base, BaseMixin):
     due_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     tasks: Mapped[list["Task"]] = relationship(back_populates="goal")
     projects: Mapped[list["Project"]] = relationship(back_populates="goal")
+    agent_runs: Mapped[list["AgentRun"]] = relationship(
+        back_populates="goal", cascade="all, delete-orphan"
+    )
 
 
 class Task(Base, BaseMixin):
@@ -37,6 +40,7 @@ class Task(Base, BaseMixin):
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="todo")
     priority: Mapped[int] = mapped_column(default=0)
+    order_index: Mapped[int] = mapped_column(default=0)
     due_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     goal: Mapped[Optional["Goal"]] = relationship(back_populates="tasks")
     project: Mapped[Optional["Project"]] = relationship(back_populates="tasks")
@@ -97,11 +101,13 @@ class Project(Base, BaseMixin):
 
 class AgentRun(Base, BaseMixin):
     __tablename__ = "agent_runs"
-    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("projects.id"), nullable=True)
+    goal_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("goals.id"), nullable=True)
     prompt: Mapped[str] = mapped_column(String, nullable=False)
     suggestion_data: Mapped[dict] = mapped_column(JSON, nullable=False)
     status: Mapped[str] = mapped_column(String, default="pending")  # pending, approved, rejected
     model_provider: Mapped[str] = mapped_column(String, default="heuristic_rules")
     explanation: Mapped[str] = mapped_column(String, nullable=False)
 
-    project: Mapped["Project"] = relationship(back_populates="agent_runs")
+    project: Mapped[Optional["Project"]] = relationship(back_populates="agent_runs")
+    goal: Mapped[Optional["Goal"]] = relationship(back_populates="agent_runs")

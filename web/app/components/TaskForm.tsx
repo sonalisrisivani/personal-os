@@ -1,19 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createTask, updateTask, Task, Goal } from "../../lib/api";
+import { createTask, updateTask, Task, Goal, Project } from "../../lib/api";
 
 interface TaskFormProps {
   task?: Task | null;
   goals: Goal[];
+  projects: Project[];
   onSave: () => void;
   onClose: () => void;
 }
 
-export default function TaskForm({ task, goals, onSave, onClose }: TaskFormProps) {
+export default function TaskForm({ task, goals, projects, onSave, onClose }: TaskFormProps) {
   const [title, setTitle] = useState(task?.title ?? "");
   const [description, setDescription] = useState(task?.description ?? "");
-  const [goalId, setGoalId] = useState(task?.goal_id ?? "");
+
+  // Tasks can belong to EITHER a goal OR a project.
+  const [parentId, setParentId] = useState<string>(() => {
+    if (task?.goal_id) return `goal_${task.goal_id}`;
+    if (task?.project_id) return `project_${task.project_id}`;
+    return "";
+  });
   const [priority, setPriority] = useState(task?.priority ?? 0);
   const [dueDate, setDueDate] = useState(task?.due_date ?? "");
   const [status, setStatus] = useState<Task["status"]>(task?.status ?? "todo");
@@ -31,10 +38,19 @@ export default function TaskForm({ task, goals, onSave, onClose }: TaskFormProps
     setSubmitting(true);
     setError(null);
     try {
+      let goal_id = undefined;
+      let project_id = undefined;
+      if (parentId.startsWith("goal_")) {
+        goal_id = parentId.replace("goal_", "");
+      } else if (parentId.startsWith("project_")) {
+        project_id = parentId.replace("project_", "");
+      }
+
       const payload = {
         title,
         description: description || undefined,
-        goal_id: goalId || undefined,
+        goal_id,
+        project_id,
         priority,
         due_date: dueDate || undefined,
         status,
@@ -90,18 +106,27 @@ export default function TaskForm({ task, goals, onSave, onClose }: TaskFormProps
           </div>
 
           <div className="form-group">
-            <label htmlFor="task-goal">Goal (optional)</label>
+            <label htmlFor="task-parent">Parent (Goal or Project)</label>
             <select
-              id="task-goal"
-              value={goalId}
-              onChange={(e) => setGoalId(e.target.value)}
+              id="task-parent"
+              value={parentId}
+              onChange={(e) => setParentId(e.target.value)}
             >
-              <option value="">— None —</option>
-              {goals.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.title}
-                </option>
-              ))}
+              <option value="">— Standalone Task (No Parent) —</option>
+              <optgroup label="Personal Goals">
+                {goals.map((g) => (
+                  <option key={`goal_${g.id}`} value={`goal_${g.id}`}>
+                    ↗ Goal: {g.title}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Technical Projects">
+                {projects.map((p) => (
+                  <option key={`project_${p.id}`} value={`project_${p.id}`}>
+                    ⊞ Project: {p.title}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 

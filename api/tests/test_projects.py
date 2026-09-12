@@ -110,6 +110,41 @@ async def test_generate_suggestions_and_approval_workflow(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_selective_approval_workflow(client: AsyncClient):
+    # Create project
+    proj_res = await client.post(
+        "/projects",
+        json={"title": "Selective Approval Test", "status": "active"},
+    )
+    project_id = proj_res.json()["id"]
+
+    # Generate suggestions
+    sug_res = await client.post(
+        f"/agent-runs/projects/{project_id}/suggestions?prompt=Next%20steps"
+    )
+    assert sug_res.status_code == 201
+    sug_data = sug_res.json()
+    run_id = sug_data["id"]
+    total_suggested = len(sug_data["suggestion_data"]["suggested_tasks"])
+    assert total_suggested >= 2
+
+    # Approve only the first task (index 0)
+    appr_res = await client.post(
+        f"/agent-runs/{run_id}/approve",
+        json={"task_indices": [0]},
+    )
+    assert appr_res.status_code == 200
+    assert appr_res.json()["status"] == "approved"
+
+    # Verify only 1 task was created for this project
+    tasks_res = await client.get(f"/tasks?project_id={project_id}")
+    assert tasks_res.status_code == 200
+    tasks = tasks_res.json()["items"]
+    assert len(tasks) == 1
+    assert tasks[0]["title"] == sug_data["suggestion_data"]["suggested_tasks"][0]["title"]
+
+
+@pytest.mark.asyncio
 async def test_reject_suggestion_workflow(client: AsyncClient):
     # Create project
     proj_res = await client.post("/projects", json={"title": "Reject Test", "status": "active"})

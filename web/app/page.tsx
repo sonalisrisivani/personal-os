@@ -1,25 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  fetchGoals,
-  fetchTasks,
-  fetchProjects,
-  fetchActivities,
-  fetchSummaryMetrics,
-  fetchApplications,
-  deleteGoal,
-  deleteTask,
-  deleteProject,
-  deleteApplication,
-  updateApplicationReminder,
-  Goal,
-  Task,
-  Project,
-  ActivityEvent,
-  SummaryMetrics,
-  JobApplication,
-} from "../lib/api";
+import { fetchGoals, fetchTasks, fetchProjects, fetchActivities, fetchSummaryMetrics, fetchApplications, deleteGoal, deleteTask, deleteProject, deleteApplication, updateApplicationReminder, Goal, Task, Project, ActivityEvent, SummaryMetrics, JobApplication } from "../lib/api";
+import EntityDetailModal from "./components/EntityDetailModal";
+import { getEntityColor } from "../lib/colors";
 import StatusBadge from "./components/StatusBadge";
 import ApplicationStatusBadge from "./components/ApplicationStatusBadge";
 import ProjectStatusBadge from "./components/ProjectStatusBadge";
@@ -29,7 +13,10 @@ import ProjectForm from "./components/ProjectForm";
 import ApplicationForm from "./components/ApplicationForm";
 import ReminderForm from "./components/ReminderForm";
 import ProjectSuggestionModal from "./components/ProjectSuggestionModal";
+import GoalSuggestionModal from "./components/GoalSuggestionModal";
+import TaskCalendar from "./components/TaskCalendar";
 import ConfirmDialog from "./components/ConfirmDialog";
+import MultiSelectDropdown from "./components/MultiSelectDropdown";
 import { SummaryMetricsCards } from "./components/SummaryMetricsCards";
 import { ActivityFeed } from "./components/ActivityFeed";
 
@@ -67,6 +54,15 @@ function TrashIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 function BellIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -82,11 +78,13 @@ function FilterTabs<T extends string>({
   value,
   onChange,
   label,
+  children,
 }: {
   options: [T, string][];
   value: T;
   onChange: (v: T) => void;
   label: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="filter-tabs" role="tablist" aria-label={label}>
@@ -101,6 +99,7 @@ function FilterTabs<T extends string>({
           {l}
         </button>
       ))}
+      {children}
     </div>
   );
 }
@@ -146,6 +145,7 @@ export default function Home() {
 
   const [goalFilter, setGoalFilter] = useState<GoalFilter>("all");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  const [taskContextFilter, setTaskContextFilter] = useState<string[]>([]);
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("active");
   const [appFilter, setAppFilter] = useState<AppFilter>("all");
 
@@ -153,6 +153,8 @@ export default function Home() {
   const [taskForm, setTaskForm] = useState<{ open: boolean; task?: Task | null }>({ open: false });
   const [projectForm, setProjectForm] = useState<{ open: boolean; project?: Project | null }>({ open: false });
   const [agentModal, setAgentModal] = useState<{ open: boolean; project?: Project | null }>({ open: false });
+  const [goalAgentModal, setGoalAgentModal] = useState<{ open: boolean; goal?: Goal | null }>({ open: false });
+  const [detailModal, setDetailModal] = useState<{ open: boolean; entity?: { kind: "goal"; data: Goal } | { kind: "project"; data: Project } }>({ open: false });
   const [appForm, setAppForm] = useState<{ open: boolean; application?: JobApplication | null }>({ open: false });
   const [reminderForm, setReminderForm] = useState<{ open: boolean; applicationId?: string }>({ open: false });
   const [confirm, setConfirm] = useState<{ open: boolean; message: string; onConfirm: () => void } | null>(null);
@@ -184,7 +186,13 @@ export default function Home() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const visibleGoals = goalFilter === "all" ? goals : goals.filter((g) => g.status === goalFilter);
-  const visibleTasks = taskFilter === "all" ? tasks : tasks.filter((t) => t.status === taskFilter);
+  const visibleTasks = tasks.filter((t) => {
+    const matchesStatus = taskFilter === "all" || t.status === taskFilter;
+    const matchesContext = taskContextFilter.length === 0 ||
+      (t.goal_id && taskContextFilter.includes(t.goal_id)) ||
+      (t.project_id && taskContextFilter.includes(t.project_id));
+    return matchesStatus && matchesContext;
+  });
   const visibleProjects = projectFilter === "all" ? projects : projects.filter((p) => p.status === projectFilter);
   const visibleApps  = appFilter  === "all" ? applications : applications.filter((a) => a.status === appFilter);
 
@@ -211,7 +219,7 @@ export default function Home() {
           <p className="eyebrow">PERSONAL OS</p>
           <h1>Make your next move deliberate.</h1>
           <p className="intro">
-            Your private dashboard for career goals, daily tasks, and job opportunities.
+            Everything becomes easier when it's written down clearly. Your private space to declutter thoughts, organize plans, and track daily actions.
           </p>
         </div>
 
@@ -224,14 +232,14 @@ export default function Home() {
             {/* Metrics strip */}
             <SummaryMetricsCards metrics={metrics} loading={loading} />
 
-            {/* ── SECTION GROUP 1: Career Direction ─────────────────────── */}
-            <div className="group-label">▸ Career Direction</div>
+            {/* ── SECTION GROUP 1: Personal & Technical Growth ───────────── */}
+            <div className="group-label">▸ Personal & Technical Growth</div>
 
-            {/* Goals */}
+            {/* Goals (Personal / Life / Habits) */}
             <section aria-labelledby="goals-heading" className="card-section">
               <SectionHeading
                 id="goals-heading"
-                title="Goals"
+                title="Personal Goals"
                 count={visibleGoals.length}
                 onAdd={() => setGoalForm({ open: true, goal: null })}
                 addLabel="Add Goal"
@@ -243,7 +251,7 @@ export default function Home() {
                 label="Filter goals"
               />
               {visibleGoals.length === 0 ? (
-                <p className="empty-hint">No goals yet — set one to define where you're headed.</p>
+                <p className="empty-hint">No personal goals yet — set one to focus on health, habits, or life milestones.</p>
               ) : (
                 <ul className="item-list">
                   {visibleGoals.map((g) => (
@@ -251,6 +259,7 @@ export default function Home() {
                       <div className="item__main">
                         <span className="item__title">{g.title}</span>
                         <div className="item__meta">
+                          <span className="goal-color-indicator" style={{ backgroundColor: getEntityColor(g.id).hex, width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block', marginRight: '6px' }}></span>
                           <StatusBadge status={g.status} />
                           {g.priority > 0 && <span className="pill">P{g.priority}</span>}
                           {g.due_date && <span className="muted">Due {g.due_date}</span>}
@@ -258,6 +267,8 @@ export default function Home() {
                         {g.description && <p className="item__desc">{g.description}</p>}
                       </div>
                       <div className="actions">
+                        <button className="action-btn" aria-label="View goal detail" title="View Full Details & Steps" onClick={() => setDetailModal({ open: true, entity: { kind: "goal", data: g } })} style={{ color: getEntityColor(g.id).hex }}><EyeIcon /></button>
+                        <button className="action-btn" aria-label="Ask AI Coach" title="⚡ Ask AI Coach" onClick={() => setGoalAgentModal({ open: true, goal: g })}><SparklesIcon /></button>
                         <button className="action-btn" aria-label="Edit goal" onClick={() => setGoalForm({ open: true, goal: g })}><EditIcon /></button>
                         <button className="action-btn action-btn--danger" aria-label="Delete goal" onClick={() => askDelete(`Delete goal "${g.title}"?`, () => deleteGoal(g.id))}><TrashIcon /></button>
                       </div>
@@ -267,11 +278,11 @@ export default function Home() {
               )}
             </section>
 
-            {/* Projects */}
+            {/* Projects (Technical & Engineering) */}
             <section aria-labelledby="projects-heading" className="card-section">
               <SectionHeading
                 id="projects-heading"
-                title="Projects"
+                title="Technical Projects"
                 count={visibleProjects.length}
                 onAdd={() => setProjectForm({ open: true, project: null })}
                 addLabel="Add Project"
@@ -283,13 +294,14 @@ export default function Home() {
                 label="Filter projects"
               />
               {visibleProjects.length === 0 ? (
-                <p className="empty-hint">No active projects — track your technical work here.</p>
+                <p className="empty-hint">No technical projects — track your engineering projects and repositories here.</p>
               ) : (
                 <ul className="item-list">
                   {visibleProjects.map((p) => (
                     <li key={p.id} className="item">
                       <div className="item__main">
                         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <span className="goal-color-indicator" style={{ backgroundColor: getEntityColor(p.id).hex, width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block' }}></span>
                           <span className="item__title">{p.title}</span>
                           <ProjectStatusBadge status={p.status} />
                         </div>
@@ -300,7 +312,8 @@ export default function Home() {
                         {p.description && <p className="item__desc">{p.description}</p>}
                       </div>
                       <div className="actions">
-                        <button className="action-btn" aria-label="Ask AI Agent" title="⚡ Ask AI Agent" onClick={() => setAgentModal({ open: true, project: p })}><SparklesIcon /></button>
+                        <button className="action-btn" aria-label="View project detail" title="View Full Details & Steps" onClick={() => setDetailModal({ open: true, entity: { kind: "project", data: p } })} style={{ color: getEntityColor(p.id).hex }}><EyeIcon /></button>
+                        <button className="action-btn" aria-label="Ask AI Architect" title="⚡ Ask AI Architect" onClick={() => setAgentModal({ open: true, project: p })}><SparklesIcon /></button>
                         <button className="action-btn" aria-label="Edit project" onClick={() => setProjectForm({ open: true, project: p })}><EditIcon /></button>
                         <button className="action-btn action-btn--danger" aria-label="Delete project" onClick={() => askDelete(`Delete project "${p.title}"?`, () => deleteProject(p.id))}><TrashIcon /></button>
                       </div>
@@ -309,6 +322,9 @@ export default function Home() {
                 </ul>
               )}
             </section>
+
+            {/* ── SECTION GROUP 2: Daily Actions & Deadlines ────────────── */}
+            <div className="group-label">▸ Daily Actions & Schedule</div>
 
             {/* Tasks */}
             <section aria-labelledby="tasks-heading" className="card-section">
@@ -324,13 +340,24 @@ export default function Home() {
                 value={taskFilter}
                 onChange={setTaskFilter}
                 label="Filter tasks"
-              />
+              >
+                <MultiSelectDropdown
+                  label="Filter by Source"
+                  options={[
+                    ...goals.map(g => ({ label: g.title, value: g.id, group: "Goals", color: getEntityColor(g.id).hex })),
+                    ...projects.map(p => ({ label: p.title, value: p.id, group: "Projects", color: getEntityColor(p.id).hex }))
+                  ]}
+                  selectedValues={taskContextFilter}
+                  onChange={setTaskContextFilter}
+                />
+              </FilterTabs>
               {visibleTasks.length === 0 ? (
-                <p className="empty-hint">No tasks here — break a goal into steps.</p>
+                <p className="empty-hint">No tasks here — break a personal goal or project into daily actions.</p>
               ) : (
                 <ul className="item-list">
                   {visibleTasks.map((t) => {
                     const parentGoal = goals.find((g) => g.id === t.goal_id);
+                    const parentProject = projects.find((p) => p.id === t.project_id);
                     return (
                       <li key={t.id} className="item">
                         <div className="item__main">
@@ -338,7 +365,34 @@ export default function Home() {
                           <div className="item__meta">
                             <StatusBadge status={t.status} />
                             {t.priority > 0 && <span className="pill">P{t.priority}</span>}
-                            {parentGoal && <span className="pill pill--goal">↗ {parentGoal.title}</span>}
+                            {parentGoal && (
+                              <span
+                                className="pill"
+                                style={{
+                                  borderColor: getEntityColor(parentGoal.id).border,
+                                  color: getEntityColor(parentGoal.id).text,
+                                  background: getEntityColor(parentGoal.id).bg,
+                                  fontWeight: 600,
+                                  fontSize: "0.72rem",
+                                }}
+                              >
+                                ↗ {parentGoal.title}
+                              </span>
+                            )}
+                            {parentProject && (
+                              <span
+                                className="pill"
+                                style={{
+                                  borderColor: getEntityColor(parentProject.id).border,
+                                  color: getEntityColor(parentProject.id).text,
+                                  background: getEntityColor(parentProject.id).bg,
+                                  fontWeight: 600,
+                                  fontSize: "0.72rem",
+                                }}
+                              >
+                                ⊞ {parentProject.title}
+                              </span>
+                            )}
                             {t.due_date && <span className="muted">Due {t.due_date}</span>}
                           </div>
                           {t.description && <p className="item__desc">{t.description}</p>}
@@ -354,7 +408,10 @@ export default function Home() {
               )}
             </section>
 
-            {/* ── SECTION GROUP 2: Job Search Pipeline ──────────────────── */}
+            {/* Calendar View */}
+            <TaskCalendar tasks={tasks} goals={goals} projects={projects} onTaskUpdated={loadData} />
+
+            {/* ── SECTION GROUP 3: Job Search Pipeline ──────────────────── */}
             <div className="group-label">▸ Job Search Pipeline</div>
 
             <section aria-labelledby="apps-heading" className="card-section">
@@ -421,6 +478,35 @@ export default function Home() {
 
       {/* ── Modals ────────────────────────────────────────────────────────── */}
 
+      {goalForm.open && (
+        <GoalForm
+          goal={goalForm.goal}
+          onSave={() => { setGoalForm({ open: false }); loadData(); }}
+          onClose={() => setGoalForm({ open: false })}
+        />
+      )}
+
+      {goalAgentModal.open && goalAgentModal.goal && (
+        <GoalSuggestionModal
+          goal={goalAgentModal.goal}
+          onSuccess={() => { setGoalAgentModal({ open: false }); loadData(); }}
+          onClose={() => setGoalAgentModal({ open: false })}
+        />
+      )}
+
+      {detailModal.open && detailModal.entity && (
+        <EntityDetailModal
+          entity={detailModal.entity}
+          tasks={tasks.filter((t) =>
+            detailModal.entity?.kind === "goal"
+              ? t.goal_id === detailModal.entity.data.id
+              : t.project_id === detailModal.entity?.data.id
+          )}
+          onClose={() => setDetailModal({ open: false })}
+          onDataChanged={loadData}
+        />
+      )}
+
       {projectForm.open && (
         <ProjectForm
           project={projectForm.project}
@@ -442,6 +528,7 @@ export default function Home() {
         <TaskForm
           task={taskForm.task}
           goals={goals}
+          projects={projects}
           onSave={() => { setTaskForm({ open: false }); loadData(); }}
           onClose={() => setTaskForm({ open: false })}
         />

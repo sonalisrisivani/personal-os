@@ -17,7 +17,11 @@ router = APIRouter(prefix="/goals", tags=["goals"])
 
 @router.post("", response_model=GoalResponse, status_code=201)
 async def create_goal(body: GoalCreate, db: AsyncSession = Depends(get_db)) -> GoalResponse:
-    goal = Goal(**body.model_dump())
+    # Convert empty string due_date to None
+    goal_data = body.model_dump()
+    if goal_data.get("due_date") == "":
+        goal_data["due_date"] = None
+    goal = Goal(**goal_data)
     db.add(goal)
     await db.commit()
     await db.refresh(goal)
