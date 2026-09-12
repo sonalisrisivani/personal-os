@@ -12,10 +12,24 @@ interface TaskCalendarProps {
   onTaskUpdated?: () => void;
 }
 
+const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const SHORT_MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
 function formatLocalDate(year: number, month: number, day: number): string {
   const m = String(month + 1).padStart(2, "0");
   const d = String(day).padStart(2, "0");
   return `${year}-${m}-${d}`;
+}
+
+function formatDisplayDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const weekday = WEEKDAY_NAMES[date.getDay()] ?? "";
+  const month = SHORT_MONTH_NAMES[m - 1] ?? "";
+  return `${weekday}, ${month} ${d}, ${y}`;
 }
 
 export default function TaskCalendar({
@@ -146,22 +160,22 @@ export default function TaskCalendar({
   }
 
   return (
-    <section aria-labelledby="calendar-heading" className="card-section calendar-section">
-      <div className="section-header" style={{ marginBottom: "12px" }}>
+    <section aria-labelledby="calendar-heading" className="card-section calendar-section" suppressHydrationWarning>
+      <div className="section-header calendar-header">
         <h3 id="calendar-heading">
           📅 Deadlines & Task Calendar
         </h3>
         <div className="calendar-controls">
-          <button className="btn btn-sm btn-ghost" onClick={prevMonth} aria-label="Previous Month">
+          <button className="btn btn-sm btn-ghost calendar-nav-btn" onClick={prevMonth} aria-label="Previous Month">
             ‹
           </button>
           <span className="calendar-month-label">
             {monthNames[month]} {year}
           </span>
-          <button className="btn btn-sm btn-ghost" onClick={nextMonth} aria-label="Next Month">
+          <button className="btn btn-sm btn-ghost calendar-nav-btn" onClick={nextMonth} aria-label="Next Month">
             ›
           </button>
-          <button className="btn btn-sm btn-ghost" onClick={goToday} style={{ marginLeft: "8px" }}>
+          <button className="btn btn-sm btn-ghost calendar-today-btn" onClick={goToday}>
             Today
           </button>
         </div>
@@ -191,19 +205,10 @@ export default function TaskCalendar({
                   } ${isSelected ? "calendar-cell--selected" : ""}`}
                   onClick={() => setSelectedDateStr(cell.dateStr)}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div className="calendar-cell-header">
                     <span className="calendar-cell-num">{cell.dayNum}</span>
                     {hasTasks && (
-                      <span
-                        style={{
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          color: "var(--text-muted)",
-                          background: "var(--surface)",
-                          borderRadius: "4px",
-                          padding: "1px 4px",
-                        }}
-                      >
+                      <span className="calendar-cell-badge">
                         {cell.tasks.length}
                       </span>
                     )}
@@ -241,18 +246,8 @@ export default function TaskCalendar({
         <div className="calendar-agenda">
           <div className="calendar-agenda-header">
             <div>
-              <h4 style={{ margin: 0, fontSize: "1rem" }}>
-                {selectedDateStr
-                  ? (() => {
-                      const [y, m, d] = selectedDateStr.split("-").map(Number);
-                      return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      });
-                    })()
-                  : "Select a date"}
+              <h4 suppressHydrationWarning style={{ margin: 0, fontSize: "1rem" }}>
+                {selectedDateStr ? formatDisplayDate(selectedDateStr) : "Select a date"}
               </h4>
               <span style={{ fontSize: "0.78rem", color: "var(--text-faint)" }}>
                 {selectedTasks.length} {selectedTasks.length === 1 ? "task due" : "tasks due"}
@@ -274,28 +269,18 @@ export default function TaskCalendar({
                     className={`agenda-item ${t.status === "done" ? "agenda-item--done" : ""}`}
                     style={{
                       borderLeft: `4px solid ${parentInfo.color.hex}`,
-                      paddingLeft: "10px",
                       background: parentInfo.color.bg,
-                      borderRadius: "0 8px 8px 0",
-                      padding: "8px 10px",
-                      marginBottom: "6px",
                     }}
                   >
-                    <label className="agenda-item-label" style={{ cursor: "pointer" }}>
+                    <label className="agenda-item-label">
                       <input
                         type="checkbox"
                         checked={t.status === "done"}
                         onChange={() => toggleTaskStatus(t)}
-                        style={{ marginTop: "3px" }}
+                        className="agenda-checkbox"
                       />
                       <div className="agenda-item-body">
-                        <span
-                          className="agenda-item-title"
-                          style={{
-                            color: "var(--text)",
-                            fontWeight: 600,
-                          }}
-                        >
+                        <span className="agenda-item-title">
                           {t.title}
                         </span>
 
