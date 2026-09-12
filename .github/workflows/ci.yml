@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: career_os
+          POSTGRES_USER: career_os
+          POSTGRES_PASSWORD: change-me
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          cd api
+          pip install -r requirements.txt
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://career_os:change-me@localhost:5432/career_os
+        run: |
+          cd api
+          pytest
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: |
+          cd web
+          npm install
+      - name: Build frontend
+        run: |
+          cd web
+          npm run build

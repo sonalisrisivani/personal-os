@@ -1,19 +1,43 @@
 # Personal OS
 
-Private, self-hostable personal operating system built incrementally with Next.js, FastAPI, PostgreSQL, and n8n. The first module focuses on career management, with goals, tasks, applications, projects, and activity tracking.
+Private, self-hostable Personal Operating System built for career and goal management. Powered by Next.js, FastAPI, PostgreSQL, and n8n.
 
-## Execution
+Personal OS provides a unified dashboard to manage your professional trajectory: tracking goals, technical projects, and job applications, with AI-powered assistance for task orchestration—all while maintaining full data ownership.
 
-The compact execution source of truth is [`docs/personal-os-map.mmd`](docs/personal-os-map.mmd). Read it before starting work, complete blocks in order, and update its status after validation. [`docs/plan.md`](docs/plan.md) contains the supporting design and scope.
+## Features
 
-Each completed map block is delivered as a focused commit. The first usable application slice will be the foundation and local deployment block.
+- **Personal Goals & Technical Projects**: Dedicated modules for habits, life goals, and engineering projects.
+- **AI Agent Suggestions**: Approval-based AI assistant for both goals (Personal Growth Coach) and projects (Technical Architect) to suggest next milestones and breakdown actionable tasks.
+- **Task Calendar & Deadlines**: Interactive monthly calendar with daily agenda view, deadline dots, and status toggles.
+- **Deterministic Color Coding**: Unique, consistent color assignment for every goal and project, inherited by child tasks and calendar events.
+- **Job Applications Pipeline**: Application tracking with interview reminder alerts and automated email ingestion webhooks.
+- **Interactive Artifacts**: Export your project or goal task lists as standalone, interactive HTML files for local offline tracking.
+- **Filterable Workspace**: Context-aware task filtering by assigned goal or project.
 
-## Current status
+## Quick Start
 
-- R0 repository bootstrap: done
-- F1 foundation and local deployment: done
-- F2 goals and tasks: done
-- F3 dashboard and activity tracking: done
-- F4 job applications and recruitment email automation: done
-- F5 projects and AI agent: done
-- V validation gate: active
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Running Locally
+1. Clone the repository and navigate to the root directory.
+2. Create a copy of the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+3. Build and run the services:
+   ```bash
+   docker-compose up --build
+   ```
+   The application will be available at:
+   - Frontend: `http://localhost:3000`
+   - API Backend: `http://localhost:8000`
+   - Automation (n8n): `http://localhost:5678`
+
+## Contributing
+
+We welcome contributions! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to report bugs, suggest features, or submit pull requests.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
