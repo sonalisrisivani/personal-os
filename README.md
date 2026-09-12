@@ -14,7 +14,20 @@ Personal OS provides a unified dashboard to manage your professional trajectory:
 - **Interactive Artifacts**: Export your project or goal task lists as standalone, interactive HTML files for local offline tracking.
 - **Filterable Workspace**: Context-aware task filtering by assigned goal or project.
 
-## Quick Start
+## ☁️ 1-Click Cloud Hosting (Free)
+
+You don't need to touch a terminal or install Docker to use Personal OS! You can deploy it to the cloud for free with one click using Render.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+Clicking this button automatically provisions and connects:
+1. **Free PostgreSQL Database** (Tables are created automatically on startup).
+2. **FastAPI Backend**.
+3. **Next.js Frontend**.
+
+Within 3 minutes, you will have your own private, live cloud URL running your Personal OS dashboard!
+
+## 💻 Local Quick Start
 
 ### Prerequisites
 - [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/)
@@ -22,13 +35,13 @@ Personal OS provides a unified dashboard to manage your professional trajectory:
 ### Running Locally
 1. Clone the repository and navigate to the root directory.
 2. Create a copy of the environment file:
-   ```bash
+   \`\`\`bash
    cp .env.example .env
-   ```
+   \`\`\`
 3. Build and run the services:
-   ```bash
+   \`\`\`bash
    docker-compose up --build
-   ```
+   \`\`\`
    The application will be available at:
    - Frontend: `http://localhost:3000`
    - API Backend: `http://localhost:8000`
