@@ -10,27 +10,31 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+from app.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-from app.models import Base
 target_metadata = Base.metadata
 
 def get_url():
     db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://career_os:change-me@localhost:5432/career_os")
     if db_url.startswith("postgres://"):
-        return db_url.replace("postgres://", "postgresql+asyncpg://", 1) + "?ssl=require"
+        db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif db_url.startswith("postgresql://"):
-        return db_url.replace("postgresql://", "postgresql+asyncpg://", 1) + "?ssl=require"
+        db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    
+    # Ensure SSL is required for remote Render Postgres databases if using asyncpg
+    if "postgresql+asyncpg" in db_url and "localhost" not in db_url and "127.0.0.1" not in db_url:
+        if "?" not in db_url:
+            db_url += "?ssl=require"
+        elif "ssl=require" not in db_url and "ssl=true" not in db_url:
+            db_url += "&ssl=require"
     return db_url
 
 def run_migrations_offline() -> None:
