@@ -30,25 +30,34 @@ Deploy your own private instance of Personal OS for free on **Render** and **Ver
 
 - 🎯 **Goals & Life Direction**: Set and track long-term aspirations, milestones, and daily habits.
 - 💻 **Technical Projects Portfolio**: Manage software side projects with repository links, live demos, and tech stack tags.
-## 🤖 AI Agent Configuration
-
-The Personal OS AI agent is provider-agnostic. By default, it operates using a built-in heuristic rule engine, ensuring functionality without external dependencies. 
-
-To enable enhanced suggestions powered by **Claude Opus 5 (claude-opus-5)**:
-
-1. Obtain an API key from [Anthropic](https://console.anthropic.com/).
-2. Add the key to your environment variables:
-   
-   ```bash
-   # In .env file
-   ANTHROPIC_API_KEY=sk-ant-api-your-key-here
-   ```
-
-The system will automatically detect the key and switch from the heuristic engine to Claude Opus.
+- 🤖 **AI Agent (Approval-Based)**: Provider-agnostic AI assistant that generates milestone suggestions and task breakdowns. Operates out-of-the-box with an offline heuristic engine or connects to any LLM (Claude Opus 5, Sonnet 5, Haiku 4.5).
 - 📅 **Interactive Task Calendar**: Monthly and daily agenda views with priority badges, deadline dots, and deterministic color coding linked to parent goals and projects.
 - 💼 **Job Application Tracker**: Track interviews, salary targets, status stages, and automated reminder alerts.
 - 📊 **Metrics & Audit Trail**: Real-time activity feeds and progress statistics.
 - 🔒 **100% Privacy & Data Ownership**: Zero tracking, self-hostable with Docker or managed cloud free tiers.
+
+---
+
+## 🤖 AI Agent & LLM Configuration
+
+Personal OS includes a provider-agnostic AI Agent module.
+
+### How it Works:
+1. **Zero-Cost Offline Mode (Default)**: If no API key is provided, the agent uses a built-in deterministic heuristic engine that analyzes your goals/projects and provides actionable milestones and tasks at 0 cost.
+2. **Claude Integration**: If you configure an Anthropic API key, the agent calls Claude to provide deep, contextual, personalized breakdowns.
+
+### Customizing the Model:
+You can use **any Claude model** (Opus, Sonnet, or Haiku) by setting environment variables in your `.env` or cloud dashboard:
+
+```bash
+# Optional: Set your Anthropic API Key
+ANTHROPIC_API_KEY=sk-ant-api-your-key-here
+
+# Optional: Choose your preferred model (defaults to claude-opus-5)
+ANTHROPIC_MODEL=claude-opus-5            # Maximum reasoning & depth
+# ANTHROPIC_MODEL=claude-sonnet-5         # Balanced speed & intelligence
+# ANTHROPIC_MODEL=claude-haiku-4-5-20251001  # Ultra-fast & lightweight
+```
 
 ---
 
