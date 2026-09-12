@@ -26,7 +26,12 @@ from app.models import Base
 target_metadata = Base.metadata
 
 def get_url():
-    return os.getenv("DATABASE_URL", "postgresql+asyncpg://career_os:change-me@localhost:5432/career_os")
+    db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://career_os:change-me@localhost:5432/career_os")
+    if db_url.startswith("postgres://"):
+        return db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif db_url.startswith("postgresql://"):
+        return db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return db_url
 
 def run_migrations_offline() -> None:
     url = get_url()
