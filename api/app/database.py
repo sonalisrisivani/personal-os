@@ -10,9 +10,9 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./personal_os.db")
 
 # Normalize postgres:// or postgresql:// to postgresql+asyncpg:// for async engine support
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1) + "?ssl=require"
 elif DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1) + "?ssl=require"
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session = sessionmaker(
