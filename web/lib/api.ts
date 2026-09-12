@@ -127,16 +127,30 @@ export interface PaginatedResponse<T> {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...init?.headers },
-    ...init,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`API ${res.status}: ${text}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      headers: { "Content-Type": "application/json", ...init?.headers },
+      ...init,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(`API ${res.status}: ${text}`);
+    }
+    if (res.status === 204) return undefined as T;
+    return res.json() as Promise<T>;
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error('API Request timed out.');
+    }
+    throw err;
   }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
 }
 
 // ─── Goals ───────────────────────────────────────────────────────────────────
