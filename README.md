@@ -30,7 +30,21 @@ Deploy your own private instance of Personal OS for free on **Render** and **Ver
 
 - 🎯 **Goals & Life Direction**: Set and track long-term aspirations, milestones, and daily habits.
 - 💻 **Technical Projects Portfolio**: Manage software side projects with repository links, live demos, and tech stack tags.
-- 🤖 **AI Agent (Approval-Based)**: Provider-agnostic AI agent ("Personal Growth Coach" & "Technical Architect") that generates milestone suggestions and task breakdowns. Every action requires human approval before database insertion.
+## 🤖 AI Agent Configuration
+
+The Personal OS AI agent is provider-agnostic. By default, it operates using a built-in heuristic rule engine, ensuring functionality without external dependencies. 
+
+To enable enhanced suggestions powered by **Claude Opus 5 (claude-opus-5)**:
+
+1. Obtain an API key from [Anthropic](https://console.anthropic.com/).
+2. Add the key to your environment variables:
+   
+   ```bash
+   # In .env file
+   ANTHROPIC_API_KEY=sk-ant-api-your-key-here
+   ```
+
+The system will automatically detect the key and switch from the heuristic engine to Claude Opus.
 - 📅 **Interactive Task Calendar**: Monthly and daily agenda views with priority badges, deadline dots, and deterministic color coding linked to parent goals and projects.
 - 💼 **Job Application Tracker**: Track interviews, salary targets, status stages, and automated reminder alerts.
 - 📊 **Metrics & Audit Trail**: Real-time activity feeds and progress statistics.
